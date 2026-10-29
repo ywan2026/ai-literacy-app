@@ -53,7 +53,15 @@
       },
       async listMessages() { return chk(await sb.from('messages').select('*').eq('room_id', room).order('id').limit(5000)); },
       async sendMessage(m) {
-        chk(await sb.from('messages').insert({ room_id: room, slide_key: m.slide_key, participant_id: m.participant_id, name: m.name, body: m.body }));
+        const row = { room_id: room, slide_key: m.slide_key, participant_id: m.participant_id, name: m.name, body: m.body };
+        if (m.image_url) row.image_url = m.image_url;
+        chk(await sb.from('messages').insert(row));
+      },
+      async uploadImage(blob) {
+        const path = room + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+        const { error } = await sb.storage.from('chat-images').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+        if (error) throw new Error('이미지 업로드 실패: ' + error.message + ' (update-image-chat.sql 실행 여부 확인)');
+        return sb.storage.from('chat-images').getPublicUrl(path).data.publicUrl;
       },
       async teacherSend(code, slide_key, body) { chk(await sb.rpc('teacher_send', { p_room: room, p_code: code, p_slide: slide_key, p_body: body })); },
       async setHidden(code, id, hidden) { chk(await sb.rpc('teacher_hide', { p_room: room, p_code: code, p_id: id, p_hidden: hidden })); },
@@ -123,6 +131,9 @@
         if (db.room.chat_locked) throw new Error('chat locked');
         const row = { id: db.seq++, room_id: room, ...m, is_teacher: false, hidden: false, created_at: new Date().toISOString() };
         db.messages.push(row); save(db); emit({ k: 'msg', a: ['INSERT', row] });
+      },
+      async uploadImage(blob) {
+        return await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
       },
       async teacherSend(code, slide_key, body) {
         const db = load();

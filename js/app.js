@@ -41,8 +41,13 @@
 
   // ---------------- 로그인 ----------------
   $('modeBadge').textContent = api.mode === 'demo' ? '데모 모드 · 이 브라우저 안에서만 동기화됩니다' : '';
+  const teacherLogin = qs.has('teacher');   // 교사 전용 주소: ...?teacher
   const saved = store.get('ai-lit:' + ROOM + ':me');
-  if (saved && saved.name) $('nameInput').value = saved.name;
+  if (teacherLogin) {
+    $('nameInput').placeholder = '교사 코드를 입력하세요'; $('nameInput').type = 'password';
+    $('loginBtn').textContent = '교사로 들어가기';
+    document.querySelector('.login-hint').textContent = '교사 전용 입장 화면입니다.';
+  } else if (saved && saved.name) $('nameInput').value = saved.name;
 
   $('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -52,6 +57,11 @@
     try {
       await api.getRoom();   // 수업 방이 있는지 먼저 확인
       const isT = await api.isTeacher(name);
+      if (teacherLogin && !isT) {
+        toast('교사 코드가 맞지 않아요. Supabase에 저장한 코드를 확인해 주세요.');
+        $('loginBtn').disabled = false; $('loginBtn').textContent = '교사로 들어가기';
+        return;
+      }
       if (isT) {
         S.teacher = true; S.code = name;
         S.me = { id: (store.get('ai-lit:' + ROOM + ':tid')) || uuid(), name: '선생님' };
@@ -78,7 +88,7 @@
 
     api.on('room', (r) => {
       const resetChanged = r.reset_at && r.reset_at !== S.room.reset_at;
-      S.room = { ...S.room, ...r };
+      S.room = { ...S.room, ...guardRoom(r) };
       if (resetChanged) { reload(); if (!S.teacher) toast('선생님이 수업 데이터를 초기화했어요'); }
       render();
     });
@@ -125,7 +135,7 @@
     try {
       const [room, msgs, resps, parts] = await Promise.all([api.getRoom(), api.listMessages(), api.listResponses(), S.teacher ? api.listParticipants() : Promise.resolve([])]);
       const resetChanged = S.room.reset_at !== undefined && room.reset_at && room.reset_at !== S.room.reset_at;
-      S.room = room; S.messages = msgs || [];
+      S.room = guardRoom(room); S.messages = msgs || [];
       S.responses = new Map((resps || []).map((r) => [rkey(r), r]));
       S.participants = new Map((parts || []).map((p) => [p.id, p]));
       if (!quiet || resetChanged) S.rendered = -1;
@@ -160,6 +170,13 @@
     const el = $('slide');
     el.className = 'slide' + (s.layout ? ' layout-' + s.layout : '');
     let h = '';
+    if (s.layout === 'divider') {
+      const list = SLIDES.filter((x) => x.section === s.section && x.layout !== 'divider');
+      el.innerHTML = `<div class="div-wrap"><div class="div-num">${String(s.divider.n).padStart(2, '0')}</div><div class="div-text"><div class="div-chap">CHAPTER ${s.divider.n} · 약 ${esc(s.divider.mins)}</div><h2 class="slide-title">${esc(s.title)}</h2><p class="lead">${esc(s.divider.sub)}</p>
+        <ol class="div-list">${list.map((x) => `<li>${esc(x.title)}</li>`).join('')}</ol></div></div><span class="pg div-pg">${idx + 1} / ${SLIDES.length}</span>`;
+      el.scrollTop = 0; $('chatSub').textContent = s.title; updateImgBtn(s);
+      return;
+    }
     h += `<div class="slide-meta">${s.section ? '<span class="sec">' + s.section + '. ' + esc(SECTIONS[s.section]) + '</span>' : ''}<span class="pg">${idx + 1} / ${SLIDES.length}</span></div>`;
     if (s.kicker) h += `<div class="kicker">${esc(s.kicker)}</div>`;
     h += `<h2 class="slide-title">${esc(s.title)}</h2>`;
@@ -177,8 +194,10 @@
         <div class="jbtns">${s.cards.choices.map((ch) => `<button class="jb" data-choice="${esc(ch)}"><span class="jl">${esc(ch)}</span><span class="jc"></span></button>`).join('')}</div>
         <div class="jbar">${s.cards.choices.map((ch) => `<i data-bar="${esc(ch)}"></i>`).join('')}</div>
         <div class="janswer" hidden></div>${S.teacher ? '<div class="jnames"></div>' : ''}</div>`).join('')}</div>`;
+    if (s.checks) h += `<div class="checks">${s.checks.map((c, i) => `<button class="check" data-check="${i}"><span class="cbox"></span><span><b>${i + 1}. ${esc(c.t)}</b><span>${esc(c.d)}</span></span></button>`).join('')}</div>`;
     el.innerHTML = h;
     el.scrollTop = 0;
+    el.querySelectorAll('.check').forEach((b) => b.addEventListener('click', () => b.classList.toggle('on')));
 
     if (s.submit) {
       const host = el.querySelector('.submit-host') || el.appendChild(Object.assign(document.createElement('div'), { className: 'submit-host' }));
@@ -199,7 +218,9 @@
 
     $('chatSub').textContent = s.title;
     $('chatText').placeholder = s.chatPrompt || '의견을 입력하세요';
+    updateImgBtn(s);
   }
+  function updateImgBtn(s) { $('imgBtn').hidden = !(s.allowImage && !S.teacher); }
 
   function linkHTML(l) { return `<div class="linkbox"><a class="btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a><span>${esc(l.hint || '')}</span></div>`; }
   function videoHTML(v) {
@@ -319,17 +340,23 @@
     const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 80;
     const msgs = S.messages.filter((m) => m.slide_key === s.key && (S.teacher || !m.hidden));
     $('chatCount').textContent = msgs.filter((m) => !m.hidden).length;
-    if (!msgs.length) list.innerHTML = `<div class="chat-empty"><div class="bubble-ico">💬</div><p>${esc(s.chatPrompt || '첫 의견을 남겨 주세요')}</p></div>`;
+    const sig = s.key + '|' + msgs.map((m) => m.id + (m.hidden ? 'h' : '')).join(',');
+    const same = sig === S._chatSig; S._chatSig = sig;
+    if (same) { /* 변경 없음: 다시 그리지 않음 */ }
+    else if (!msgs.length) list.innerHTML = `<div class="chat-empty"><div class="bubble-ico">💬</div><p>${esc(s.chatPrompt || '첫 의견을 남겨 주세요')}</p></div>`;
     else list.innerHTML = msgs.map((m) => {
       const mine = m.participant_id && m.participant_id === S.me.id && !m.is_teacher || (S.teacher && m.is_teacher);
       const cls = ['msg', mine ? 'mine' : '', m.is_teacher ? 'teacher' : '', m.hidden ? 'hidden-msg' : ''].join(' ');
       const t = new Date(m.created_at); const tm = isNaN(t) ? '' : t.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
       const tools = S.teacher && !m.is_teacher ? `<button class="hide-btn" data-id="${m.id}" data-h="${m.hidden ? 0 : 1}">${m.hidden ? '다시 보이기' : '숨기기'}</button>` : '';
-      return `<div class="${cls}"><div class="who">${mine ? '' : esc(m.name)}${m.hidden ? ' · 숨김' : ''}</div><div class="bubble">${esc(m.body)}</div><div class="meta">${tm}${tools}</div></div>`;
+      return `<div class="${cls}"><div class="who">${mine ? '' : esc(m.name)}${m.hidden ? ' · 숨김' : ''}</div><div class="bubble${m.image_url ? ' has-img' : ''}">${m.image_url ? `<img class="chat-img" src="${esc(m.image_url)}" alt="${esc(m.name)}님이 올린 이미지" loading="lazy">` : ''}${m.image_url && m.body === '(이미지)' ? '' : esc(m.body)}</div><div class="meta">${tm}${tools}</div></div>`;
     }).join('');
-    list.querySelectorAll('.hide-btn').forEach((b) => b.addEventListener('click', async () => {
-      try { await api.setHidden(S.code, +b.dataset.id, b.dataset.h === '1'); } catch (e) { fail(e); }
-    }));
+    if (!same) {
+      list.querySelectorAll('.hide-btn').forEach((b) => b.addEventListener('click', async () => {
+        try { await api.setHidden(S.code, +b.dataset.id, b.dataset.h === '1'); } catch (e) { fail(e); }
+      }));
+      list.querySelectorAll('.chat-img').forEach((img) => img.addEventListener('click', () => openLightbox(img.src, img.alt)));
+    }
     if (nearBottom || S._forceBottom) { list.scrollTop = list.scrollHeight; S._forceBottom = false; }
     const locked = S.room.chat_locked && !S.teacher;
     $('chatText').disabled = locked; $('sendBtn').disabled = locked;
@@ -353,19 +380,81 @@
     } catch (err) { ta.value = body; fail(S.room.chat_locked ? '채팅이 잠겨 있어요' : err); }
   });
 
+  // 이미지 공유: 기기에서 고른 사진을 줄여서(최대 1280px) 올립니다
+  function shrink(file) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file); const img = new Image();
+      img.onload = () => {
+        const max = 1280; const k = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+        c.toBlob((b) => (b ? res(b) : rej(new Error('이미지를 변환하지 못했어요'))), 'image/jpeg', 0.82);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('이미지 파일을 열 수 없어요')); };
+      img.src = url;
+    });
+  }
+  $('imgInput').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!file) return;
+    if (!/^image\//.test(file.type)) return toast('이미지 파일만 올릴 수 있어요');
+    if (S.room.chat_locked) return toast('채팅이 잠겨 있어요');
+    const s = cur(); $('imgBtn').classList.add('busy');
+    try {
+      const blob = await shrink(file);
+      const url = await api.uploadImage(blob);
+      S._forceBottom = true;
+      const caption = ta.value.trim(); if (caption) { ta.value = ''; ta.style.height = 'auto'; }
+      await api.sendMessage({ slide_key: s.key, participant_id: S.me.id, name: S.me.name, body: caption || '(이미지)', image_url: url });
+      toast('이미지를 공유했어요');
+    } catch (err) { fail(err); }
+    finally { $('imgBtn').classList.remove('busy'); }
+  });
+  function openLightbox(src, alt) { $('lightImg').src = src; $('lightImg').alt = alt || ''; $('lightbox').hidden = false; }
+  $('lightbox').addEventListener('click', () => ($('lightbox').hidden = true));
+
+  // ---------------- 교사: 전체 목차 (주소창 클릭) ----------------
+  function renderOverview() {
+    const curIdx = S.room.current_slide | 0;
+    $('ovBody').innerHTML = SECTIONS.map((name, sec) => {
+      const items = SLIDES.map((x, i) => ({ x, i })).filter(({ x }) => x.section === sec);
+      if (!items.length) return '';
+      return `<section class="ov-sec"><h4>${sec ? sec + '. ' : ''}${esc(name)}</h4><div class="ov-grid">${items.map(({ x, i }) => {
+        const kind = x.layout === 'divider' ? '간지' : x.video ? '영상' : x.poll ? '투표' : x.cards ? '판정' : x.submit ? '제출' : x.flips ? '카드' : x.checks ? '체크' : x.link ? '활동' : '설명';
+        return `<button class="ov-card ${i === curIdx ? 'current' : ''} ${x.layout === 'divider' ? 'is-div' : ''}" data-go="${i}"><span class="ov-n">${i + 1}</span><span class="ov-k">${kind}</span><b>${esc(x.title)}</b></button>`;
+      }).join('')}</div></section>`;
+    }).join('');
+  }
+  $('address').addEventListener('click', () => {
+    if (!S.teacher) return;
+    renderOverview(); $('overview').hidden = false;
+    const c = $('ovBody').querySelector('.current'); if (c) c.scrollIntoView({ block: 'center' });
+  });
+  $('ovClose').addEventListener('click', () => ($('overview').hidden = true));
+  $('ovBody').addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { $('overview').hidden = true; go(+b.dataset.go); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('overview').hidden = true; $('lightbox').hidden = true; } });
+
   // ---------------- 교사 도구 ----------------
+  // 교사가 방금 넘긴 화면이 늦게 도착한 옛 데이터로 되돌아가지 않도록 잠시 보호
+  function guardRoom(r) {
+    if (S.teacher && S.pending && Date.now() < S.pending.until && r.current_slide !== S.pending.slide) return { ...r, current_slide: S.pending.slide };
+    return r;
+  }
   async function go(i) {
     if (!S.teacher) return;
     i = Math.max(0, Math.min(SLIDES.length - 1, i));
     if (i === (S.room.current_slide | 0)) return;
+    const prev = S.room.current_slide | 0;
+    S.pending = { slide: i, until: Date.now() + 4000 };
     S.room.current_slide = i; render();
-    try { await api.setRoom(S.code, { current_slide: i }); } catch (e) { fail(e); }
+    try { await api.setRoom(S.code, { current_slide: i }); }
+    catch (e) { S.pending = null; S.room.current_slide = prev; render(); fail(new Error('화면을 넘기지 못했어요 (' + (e.message || e) + ')')); }
   }
   $('prevBtn').onclick = $('tbPrev').onclick = () => go((S.room.current_slide | 0) - 1);
   $('nextBtn').onclick = $('tbNext').onclick = () => go((S.room.current_slide | 0) + 1);
   $('tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b && S.teacher) go(+b.dataset.go); });
   document.addEventListener('keydown', (e) => {
-    if (!S.teacher || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    if (!S.teacher || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || !$('overview').hidden) return;
     if (e.key === 'ArrowRight' || e.key === 'PageDown') go((S.room.current_slide | 0) + 1);
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') go((S.room.current_slide | 0) - 1);
   });
@@ -415,7 +504,7 @@
       };
       const rows = [['구분', '슬라이드', '슬라이드 제목', '이름', '항목', '응답', '시간']];
       resps.filter((r) => r.item !== 'reveal').forEach((r) => { const s = SLIDES[idx[r.slide_key]]; rows.push(['응답', (idx[r.slide_key] ?? -1) + 1, s ? s.title : r.slide_key, r.name, itemName(s, r.item), fmt(s, r.item, r.value), r.updated_at]); });
-      msgs.forEach((m) => { const s = SLIDES[idx[m.slide_key]]; rows.push(['채팅' + (m.hidden ? '(숨김)' : ''), (idx[m.slide_key] ?? -1) + 1, s ? s.title : m.slide_key, m.name, '', m.body, m.created_at]); });
+      msgs.forEach((m) => { const s = SLIDES[idx[m.slide_key]]; rows.push(['채팅' + (m.hidden ? '(숨김)' : ''), (idx[m.slide_key] ?? -1) + 1, s ? s.title : m.slide_key, m.name, m.image_url ? '이미지' : '', m.image_url ? (m.body === '(이미지)' ? '' : m.body + ' ') + m.image_url : m.body, m.created_at]); });
       const body = rows.slice(1).sort((a, b) => (a[1] - b[1]) || String(a[6]).localeCompare(String(b[6])));
       parts.forEach((p) => body.push(['참여자', '', '', p.name, '접속', '', p.joined_at]));
       const csv = '﻿' + [rows[0], ...body].map((r) => r.map((c) => '"' + String(c ?? '').replace(/"/g, '""') + '"').join(',')).join('\r\n');

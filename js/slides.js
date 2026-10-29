@@ -5,6 +5,9 @@
 // ===============================================================
 window.SECTIONS = ['시작', '실태조사', '도입', '사진·초상권', 'AI 저작권', '생성·편향', '상황 판정', '마무리'];
 
+// 아이콘 그리드: n개 중 hi개를 강조 (데이터를 눈으로 보여 주는 도식)
+const iconGrid = (n, hi, hiLabel, loLabel) => `<div class="igrid">${Array.from({ length: n }, (_, i) => `<i class="${i < hi ? 'hi' : ''}"></i>`).join('')}</div><div class="ilegend"><span><i class="hi"></i>${hiLabel}</span><span><i></i>${loLabel}</span></div>`;
+
 window.SLIDES = [
   // ───────────── 시작 ─────────────
   {
@@ -14,30 +17,31 @@ window.SLIDES = [
     html: `<p class="lead">사진 촬영·이미지 사용과 초상권, AI 생성물의 저작권과 침해 예방</p>
       <div class="chips"><span class="chip">50분</span><span class="chip">오른쪽 채팅창에 의견을 남겨요</span><span class="chip">화면은 선생님이 넘겨요</span></div>`,
     chatPrompt: '들어왔다면 인사 한마디!',
-    note: '접속 확인(명단 버튼). 전원 접속 후 시작. 오른쪽 채팅은 슬라이드마다 따로 쌓입니다.',
   },
 
   // ───────────── ① 실태조사 (5분) ─────────────
+  {
+    key: 'div-1', section: 1, layout: 'divider', title: '실태조사',
+    divider: { n: 1, sub: '우리는 AI를 어떻게 쓰고 있을까?', mins: '5분' },
+    chatPrompt: '우리는 AI를 어떻게 쓰고 있을까?',
+  },
   {
     key: 'survey-freq', section: 1, title: 'AI를 얼마나 자주 쓰나요?',
     html: `<p class="sub">ChatGPT, Gemini, 뤼튼, 사진 보정 앱의 AI 기능 등 모두 포함해요.</p>`,
     poll: { options: ['거의 매일', '일주일에 2~3번', '한 달에 몇 번', '거의 안 써요'] },
     chatPrompt: '가장 자주 쓰는 AI 서비스 이름을 적어 주세요',
-    note: '1분. 결과 그래프를 보며 "우리 반 대부분이 이미 사용자" 확인.',
   },
   {
     key: 'survey-use', section: 1, title: 'AI를 주로 어디에 쓰나요?',
     html: `<p class="sub">해당하는 것을 모두 골라요.</p>`,
     poll: { multi: true, options: ['과제·공부 질문', '글 요약·번역', '이미지·영상 만들기', '사진 보정·필터', '고민 상담·대화', '코딩', '기타'] },
     chatPrompt: '최근에 AI로 한 일 하나를 적어 주세요',
-    note: '이미지 생성·사진 보정 비율에 주목 → 오늘 주제로 연결.',
   },
   {
     key: 'survey-photo', section: 1, title: '내 사진이나 얼굴을 AI에 올려 본 적이 있나요?',
     html: `<p class="sub">해당하는 것을 모두 골라요.</p>`,
     poll: { multi: true, options: ['내 사진을 캐릭터·애니풍으로 바꿔 봤다', '보정·배경 제거에 써 봤다', '친구가 나온 사진을 올려 본 적이 있다', '연예인 사진을 올려 본 적이 있다', '없다'] },
     chatPrompt: '어떤 서비스에, 어떤 사진을 올렸나요?',
-    note: '"친구 사진" 응답 수를 짚어 두고 ③에서 다시 언급.',
   },
   {
     key: 'survey-free', section: 1, layout: 'question',
@@ -45,28 +49,31 @@ window.SLIDES = [
     title: 'AI를 쓰다가 "이거 괜찮나?" 싶었던 순간이 있었나요?',
     html: `<p class="sub">예: 과제에 그대로 내도 되나? · 친구 얼굴을 넣어도 되나? · 이 그림을 SNS에 올려도 되나?</p>`,
     chatPrompt: '그 순간을 짧게 적어 주세요',
-    note: '2분. 채팅 중 2~3개를 읽어 주며 오늘 수업이 답할 질문으로 정리.',
   },
 
   // ───────────── ② 도입 (6분) ─────────────
+  {
+    key: 'div-2', section: 2, layout: 'divider', title: '도입',
+    divider: { n: 2, sub: '진짜와 가짜, 그리고 내 데이터의 행방', mins: '8분' },
+    chatPrompt: '진짜와 가짜, 그리고 내 데이터의 행방',
+  },
   {
     key: 'quiz-face', section: 2, title: '진짜 얼굴은 어느 쪽일까?',
     html: `<p class="sub">두 사진 중 하나는 실제 사람, 하나는 AI가 만든 얼굴이에요. 2분 동안 최대한 많이 맞혀 보세요.</p>`,
     link: { url: 'https://www.whichfaceisreal.com/', label: 'Which Face Is Real 열기', hint: '새 탭에서 열려요. 2분 뒤 이 화면으로 돌아와 결과를 골라 주세요.' },
     poll: { options: ['10개 중 0~3개', '4~6개', '7~8개', '9~10개'], label: '몇 개 맞혔나요?' },
     chatPrompt: '무엇을 보고 AI 얼굴을 구별했나요?',
-    note: '배경 왜곡, 귀걸이 짝, 머리카락 경계, 치아 등 단서 공유. "구별이 점점 어려워진다"로 마무리.',
   },
   {
-    key: 'quiz-video', section: 2, title: '이번엔 영상! 진짜 사람은 누구일까?',
-    html: `<p class="sub">여러 개의 영상 중 <b>실제 사람이 찍힌 영상</b>만 골라내는 게임이에요. 틀리면 기회가 줄고, 3번 틀리면 게임 오버! 2분 동안 도전해 보세요.</p>
+    key: 'quiz-video', section: 2, title: '이번엔 명화! AI가 만든 가짜 작품을 찾아라',
+    html: `<p class="sub">Google Arts & Culture의 <b>Odd One Out</b> 게임이에요. 전 세계 미술관의 <b>진짜 소장품</b> 사이에 <b>Google AI가 만든 가짜 작품 1점</b>이 숨어 있어요. 2분 동안 몇 개나 찾아낼 수 있을까요?</p>
       <div class="grid-2">
-        <div class="info-card"><div class="tag">관찰 포인트</div><ul><li>눈 깜빡임이 자연스러운가?</li><li>입 모양이 말과 정확히 맞는가, 너무 규칙적이지 않은가?</li><li>머리카락·귀·치아의 경계가 흐려지지 않는가?</li></ul></div>
-        <div class="info-card orange"><div class="tag">생각해 보기</div><p>사진보다 영상이 더 믿음직해 보이는 이유는? 영상까지 가짜로 만들 수 있다면 무엇을 믿어야 할까?</p></div>
+        <div class="info-card"><div class="tag">관찰 포인트</div><ul><li>붓 자국과 질감이 그림 전체에서 일관적인가?</li><li>손가락·글자·서명·장식 무늬가 뭉개지거나 이상하지 않은가?</li><li>배경의 작은 부분까지 의미가 있는가, 흐릿하게 녹아 있는가?</li></ul></div>
+        <div class="info-card orange"><div class="tag">생각해 보기</div><p>AI가 명화까지 흉내 낸다면, 이 AI는 <b>누구의 그림</b>을 보고 배웠을까? 그 화가들에게 허락을 받았을까? (④ AI 저작권에서 다시 이야기해요)</p></div>
       </div>`,
-    link: { url: 'https://turing.hourone.ai/', label: '진짜 사람 찾기 게임 열기', hint: '새 탭에서 열려요. 2분 뒤 돌아와 결과를 골라 주세요.' },
-    poll: { options: ['1레벨에서 게임 오버', '2~3레벨', '4~5레벨', '6레벨 이상'], label: '몇 레벨까지 갔나요?' },
-    chatPrompt: '가짜 영상을 알아챈 단서는 무엇이었나요?',
+    link: { url: 'https://artsandculture.google.com/experiment/odd-one-out/wAHNn4JsVTFOiw', label: 'Odd One Out 게임 열기', hint: '새 탭에서 열려요. 2분 뒤 이 화면으로 돌아와 결과를 골라 주세요.' },
+    poll: { options: ['0~2개 맞힘', '3~5개', '6~9개', '10개 이상'], label: '몇 개나 맞혔나요?' },
+    chatPrompt: 'AI 작품을 알아챈 단서는 무엇이었나요?',
   },
   {
     key: 'verify', section: 2, title: '이 사진, 진짜일까? 출처 확인 3단계',
@@ -81,18 +88,27 @@ window.SLIDES = [
   },
   {
     key: 'data-flow', section: 2, title: '내가 올린 사진은 어디로 갈까?',
-    html: `<div class="flow">
-        <div class="flow-step"><b>1</b><h4>전송·저장</h4><p>사진이 내 기기를 떠나 회사 서버에 저장돼요</p></div>
+    html: `<div class="flow-anim" aria-label="사진이 업로드되어 서버에 저장되고 학습 데이터와 사람 검토로 이어지는 과정">
+        <div class="fa-track"></div>
+        <div class="fa-photo"><svg viewBox="0 0 40 32"><rect x="1" y="1" width="38" height="30" rx="5" fill="#fff" stroke="#007aff" stroke-width="2"/><circle cx="13" cy="11" r="4" fill="#ffb340"/><path d="M4 28l10-10 7 7 6-5 9 8z" fill="#34c759"/></svg></div>
+        <div class="fa-st s1"><div class="fa-ico">📱</div><b>내 기기</b><span>사진 선택·업로드</span></div>
+        <div class="fa-st s2"><div class="fa-ico">☁️</div><b>회사 서버</b><span>전송·저장</span></div>
+        <div class="fa-st s3"><div class="fa-ico">🤖</div><b>서비스 제공</b><span>답변·이미지 생성</span></div>
+        <div class="fa-st s4 warn"><div class="fa-ico">🗄️</div><b>학습 데이터</b><span>설정에 따라 다음 AI 훈련</span></div>
+        <div class="fa-st s5 warn"><div class="fa-ico">👀</div><b>사람 검토</b><span>품질·안전 점검</span></div>
+        <div class="fa-copies"><i></i><i></i><i></i></div>
+      </div>
+      <div class="flow">
+        <div class="flow-step"><b>1</b><h4>전송·저장</h4><p>사진이 내 기기를 떠나 회사 서버에 저장돼요. 지워도 백업이 남을 수 있어요.</p></div>
         <div class="flow-arrow">›</div>
         <div class="flow-step"><b>2</b><h4>서비스 제공</h4><p>답변을 하거나 이미지를 만드는 데 쓰여요</p></div>
         <div class="flow-arrow">›</div>
         <div class="flow-step warn"><b>3</b><h4>학습 데이터</h4><p>설정에 따라 다음 AI를 훈련하는 데 쓰일 수 있어요</p></div>
         <div class="flow-arrow">›</div>
-        <div class="flow-step warn"><b>4</b><h4>사람 검토</h4><p>품질·안전 점검을 위해 사람이 읽을 수도 있어요</p></div>
+        <div class="flow-step warn"><b>4</b><h4>사람 검토</h4><p>품질·안전 점검을 위해 사람이 볼 수도 있어요</p></div>
       </div>
       <div class="callout"><b>데이터 리터러시의 시작</b> 친구가 나온 사진을 올리면, 친구의 얼굴 데이터를 <u>친구 대신 내가</u> 회사에 넘기는 셈이에요.</div>`,
     chatPrompt: '내 사진이 학습 데이터가 된다면, 괜찮다/싫다? 이유는?',
-    note: '다음 장에서 실제 약관으로 확인.',
   },
   {
     key: 'terms', section: 2, title: '실제 약관에는 뭐라고 쓰여 있을까?',
@@ -123,10 +139,14 @@ window.SLIDES = [
       <div class="callout small"><b>공통점</b> ① 끄지 않으면 쓰일 수 있다 ② 끈 뒤에도 <u>이미 학습된 것은 되돌릴 수 없다</u> ③ 👍·👎 피드백을 누르면, 학습을 꺼 놨어도 <u>그 대화 전체</u>가 회사로 보내져 개선에 쓰일 수 있다</div>
       <p class="source">출처: OpenAI 도움말 「모델 성능 향상을 위한 데이터 사용」, Google 「Gemini 앱 개인정보 보호 고지」, Anthropic 「Updates to our Consumer Terms」(2025.8.28). 2026년 10월 확인 · 약관은 바뀔 수 있어요.</p>`,
     chatPrompt: '지금 내가 쓰는 AI의 설정을 확인해 봤나요? 켜져 있었나요?',
-    note: '30초 동안 실제 설정 화면 확인하게 해도 좋음. 정책은 바뀔 수 있으니 "직접 확인하는 습관"을 강조.',
   },
 
   // ───────────── ③ 사진·초상권 (12분) ─────────────
+  {
+    key: 'div-3', section: 3, layout: 'divider', title: '사진·초상권',
+    divider: { n: 3, sub: '찍은 사람과 찍힌 사람의 권리', mins: '12분' },
+    chatPrompt: '찍은 사람과 찍힌 사람의 권리',
+  },
   {
     key: 'two-rights', section: 3, title: '사진 한 장에 붙는 두 가지 권리',
     html: `<div class="grid-2">
@@ -139,7 +159,6 @@ window.SLIDES = [
       </div>
       <div class="callout"><b>예시</b> 친구가 찍어 준 내 사진 → 저작권은 <u>친구</u>, 초상권은 <u>나</u>. 둘 다의 허락이 필요할 때가 있어요.</div>`,
     chatPrompt: '내가 찍은 친구 사진, 저작권과 초상권은 각각 누구에게?',
-    note: '채팅으로 답 확인: 저작권=나, 초상권=친구.',
   },
   {
     key: 'cases-1', section: 3, title: '이럴 땐? 사례로 보는 초상권 ①',
@@ -151,7 +170,6 @@ window.SLIDES = [
       { tag: '수업 촬영', q: '수업 중 선생님 모습을 몰래 찍어 SNS에 올렸다.', a: '선생님에게도 초상권이 있어요. 몰래 촬영·게시는 <b>교육활동 침해</b>로 처리될 수 있어요.' },
     ],
     chatPrompt: '가장 헷갈렸던 사례는? 이유는?',
-    note: '학생들이 각자 카드를 넘김. 2~3분.',
   },
   {
     key: 'cases-2', section: 3, title: '이럴 땐? AI와 만난 초상권 ②',
@@ -163,7 +181,6 @@ window.SLIDES = [
       { tag: '내 사진 도용', q: '내가 찍은 풍경 사진을 누군가 퍼가서 AI로 변환해 판매하고 있다.', a: '이번엔 내가 피해자! <b>내 저작권 침해</b>예요. 원본 파일·촬영 날짜를 증거로 남기고 삭제를 요청할 수 있어요.' },
     ],
     chatPrompt: '내 사진을 지키기 위해 할 수 있는 일 한 가지는?',
-    note: '마지막 카드로 "나도 권리자"라는 관점 전환.',
   },
   {
     key: 'deepfake-law', section: 3, title: '딥페이크는 장난이 아니라 범죄예요',
@@ -177,13 +194,11 @@ window.SLIDES = [
       </div>
       <div class="callout"><b>"장난이었어요"는 통하지 않아요</b> 피해자가 미성년자면 청소년성보호법이 적용돼 더 무겁게 처벌돼요. 성적이지 않은 합성이라도 명예훼손·모욕이 될 수 있어요.</div>`,
     chatPrompt: '이 법을 처음 알았나요? 느낀 점 한 줄',
-    note: '사실 전달 위주. 구체적 피해 사례 묘사는 피함.',
   },
   {
     key: 'video-ebs', section: 3, title: '가짜 영상, 진짜 피해',
     video: { id: 'hpd7k8GHrlo', start: 0, end: 0, caption: 'EBS × 한국양성평등교육진흥원 「가짜 영상, 진짜 피해」 (2025.12, 9분 7초) · 일부 구간 시청' },
     chatPrompt: '영상에서 가장 기억에 남는 장면이나 말은?',
-    note: '★ js/slides.js 에서 start/end(초)를 원하는 구간으로 설정하세요. 예: start: 60, end: 240',
   },
   {
     key: 'deepfake-help', section: 3, title: '피해를 입었거나, 친구의 피해를 알게 됐다면',
@@ -194,22 +209,27 @@ window.SLIDES = [
         <div class="step"><b>4</b><div><h4>친구가 피해자라면</h4><p>보지 않기, 퍼뜨리지 않기, 피해자 탓하지 않기. 공유하는 순간 나도 가해에 가담하게 돼요.</p></div></div>
       </div>`,
     chatPrompt: '친구가 피해를 입었다는 걸 알게 되면, 나는 먼저 무엇을 할까?',
-    note: '③ 단원 마무리. 시간 체크(누적 약 23분).',
   },
 
   {
     key: 'forget', section: 3, title: '어릴 때 올린 내 사진, 지울 수 있을까?',
     html: `<div class="grid-2">
         <div class="info-card blue"><div class="tag">개인정보보호위원회</div><h3>지우개 서비스 (디지털 잊힐 권리)</h3>
-          <ul><li><b>만 30세 미만</b>이 <b>만 19세 미만</b>일 때 올린 게시물이 대상 (2024.1. 확대)</li><li>내 개인정보가 담긴 글·사진의 <b>삭제나 가림 처리</b>를 도와줘요</li><li>개인정보 포털에서 신청 · 신청 조건은 바뀔 수 있으니 최신 내용 확인</li></ul></div>
+          <ul><li><b>만 30세 미만</b>이 <b>만 19세 미만</b>일 때 올린 게시물이 대상 (2024.1. 확대)</li><li>내 개인정보가 담긴 글·사진의 <b>삭제나 가림 처리</b>를 도와줘요</li><li>지원 내용: 게시물 삭제·가림 요청, 검색 결과 제외 요청, 상담</li><li>문의 02-2135-8362 · 신청 조건은 바뀔 수 있으니 최신 내용 확인</li></ul></div>
         <div class="info-card"><div class="tag">스스로 할 수 있는 일</div><h3>올리기 전, 그리고 올린 뒤</h3>
           <ul><li>내가 올린 것: 계정에서 직접 삭제, 공개 범위 줄이기</li><li>남이 올린 내 사진: 플랫폼의 <b>초상권·개인정보 침해 신고</b> 기능 이용</li><li>성적 합성물·불법촬영물: 앞에서 본 <b>디지털성범죄피해자지원센터</b>가 삭제를 지원</li></ul></div>
       </div>
       <div class="callout"><b>하지만</b> 한 번 퍼진 사진은 다른 사람이 저장하거나 AI 학습에 쓰였을 수 있어 완전히 지우기 어려워요. 가장 확실한 방법은 <u>올리기 전에 한 번 더 생각하기</u>예요.</div>`,
+    link: { url: 'https://www.privacy.go.kr/front/contents/cntntsView.do?contsNo=260', label: '지우개 서비스 바로가기', hint: '개인정보 포털(개인정보보호위원회)의 지우개 서비스 안내·신청 페이지예요.' },
     chatPrompt: '지우고 싶은 옛 게시물이 있나요? (내용은 쓰지 말고 있다/없다만)',
   },
 
   // ───────────── ④ AI 생성물 저작권 (11분) ─────────────
+  {
+    key: 'div-4', section: 4, layout: 'divider', title: 'AI 저작권',
+    divider: { n: 4, sub: 'AI가 만든 것은 누구의 것일까?', mins: '10분' },
+    chatPrompt: 'AI가 만든 것은 누구의 것일까?',
+  },
   {
     key: 'ai-copyright', section: 4, title: 'AI가 만든 그림, 저작권이 있을까?',
     html: `<div class="grid-2">
@@ -223,14 +243,12 @@ window.SLIDES = [
         <div class="mini"><b>AI 만화 (미국)</b><span>사람이 쓴 글과 컷 배치는 인정, AI가 그린 그림은 불인정</span></div>
       </div>`,
     chatPrompt: 'AI 그림에도 저작권을 줘야 할까? 찬성/반대와 이유',
-    note: '핵심: "AI 결과물 자체 ✕, 내가 한 선택·수정·배열 ○"',
   },
   {
     key: 'video-colorado', section: 4, title: '미술대회 1위 작품, 알고 보니 AI가 그렸다?',
     video: { id: '6alFjze_LVc', start: 0, end: 0, caption: 'KBS [글로벌K] 미 미술전서 AI가 그린 그림이 1위…논란 일파만파 (2022.9.7.)' },
     html: `<p class="sub">2022년 미국 콜로라도 주 박람회 미술대회 디지털아트 부문에서 미드저니로 만든 「스페이스 오페라 극장」이 1위를 차지했어요. 작가는 프롬프트를 수백 번 고쳤다고 했지만, 미국 저작권청은 이 그림의 저작권 등록을 거절했어요.</p>`,
     chatPrompt: '이 작품의 1위, 인정할 수 있다/없다? 이유는?',
-    note: '영상 후 바로 다음 장 투표로.',
   },
   {
     key: 'debate', section: 4, title: '누구에게 저작권을 인정할 수 있을까?',
@@ -244,7 +262,6 @@ window.SLIDES = [
       ],
     },
     chatPrompt: '내 판정의 이유를 적어 주세요 (예: 서연 O — 직접 그렸으니까)',
-    note: '안내서 기준: 지민 = 원칙적으로 불인정(선택·배열에 창작성 있으면 일부), 서연 = 직접 그린 부분 인정, 하준 = 인정 어렵고 오히려 원작가 권리 침해 소지.',
   },
   {
     key: 'train-data', section: 4, title: 'AI는 누구의 작품으로 공부했을까?',
@@ -270,10 +287,14 @@ window.SLIDES = [
       </div>
       <div class="callout small"><b>AI 기본법 (2026.1.22. 시행)</b> 생성형 AI 결과물에 AI 생성 사실을 표시할 의무는 <u>서비스 사업자</u>에게 있고, 실제와 구별하기 어려운 딥페이크는 알아볼 수 있게 표시해야 해요. 개인에게 직접 지우는 의무는 아니지만 플랫폼 규칙과 학교 규정은 따로 있어요. 침해 책임은 대부분 <b>사용자</b>에게 돌아와요.</div>`,
     chatPrompt: '5가지 중 내가 가장 안 지켰던 습관은?',
-    note: '다음 체험에서 1·4·5번을 직접 실천.',
   },
 
   // ───────────── ⑤ 생성 체험 (7분) ─────────────
+  {
+    key: 'div-5', section: 5, layout: 'divider', title: '생성·편향',
+    divider: { n: 5, sub: '직접 만들고, 편향을 점검해요', mins: '10분' },
+    chatPrompt: '직접 만들고, 편향을 점검해요',
+  },
   {
     key: 'make', section: 5, title: '미션: 우리 동아리 홍보 이미지 만들기',
     html: `<div class="grid-2 make">
@@ -284,6 +305,9 @@ window.SLIDES = [
             <li>아래 칸에 <b>최종 프롬프트 · 내가 기여한 점 · 표기문</b> 제출</li>
           </ol>
           <div class="banlist"><b>하지 않기</b> 실존 인물·연예인 · 기존 캐릭터 · 특정 작가·스튜디오 화풍 · 친구 사진 업로드</div>
+          <div class="label-guide"><b>AI 사용 표기문에 들어갈 4가지</b>
+            <ol><li><b>도구</b>: 어떤 AI의 어떤 기능? (예: OpenAI ChatGPT 이미지 생성)</li><li><b>범위</b>: 결과물의 어느 부분에 썼나?</li><li><b>나의 기여</b>: 내가 직접 한 일은?</li><li><b>날짜</b>와 <b>책임</b>: 언제 만들었고, 최종 책임은 나에게</li></ol></div>
+          <div class="share-guide"><b>📷 이미지 공유</b> 완성된 이미지를 길게 눌러 <u>'사진에 저장'</u> → 오른쪽 채팅창의 <b>사진 버튼</b>으로 올려요.</div>
           <p class="hint">계정이 없다면 옆 친구와 짝으로 함께 해요.</p>
         </div>
         <div class="submit-host"></div>
@@ -293,12 +317,12 @@ window.SLIDES = [
       fields: [
         { id: 'prompt', label: '최종 프롬프트', placeholder: '예: 별이 쏟아지는 밤하늘 아래 노트북을 든 학생들, 파란·보라 톤, 포스터 구도…', rows: 3 },
         { id: 'contrib', label: '내가 기여한 점', placeholder: '예: 동아리 주제에 맞게 장면을 기획하고, 색감을 두 번 수정 요청함', rows: 2 },
-        { id: 'label', label: 'AI 사용 표기문', placeholder: '예: 이 이미지는 ChatGPT(OpenAI)로 생성했으며, 기획과 프롬프트 수정은 ○○○가 했습니다. (2026.11.)', rows: 2 },
+        { id: 'label', label: 'AI 사용 표기문', placeholder: '예: 이 이미지는 OpenAI ChatGPT의 이미지 생성 기능으로 만들었습니다. 장면 기획과 프롬프트 작성·수정은 ○○○가 했으며, 결과물에 대한 책임은 저에게 있습니다. (2026.11.○.)', rows: 3 },
       ],
       button: '제출하고 채팅에 공유',
     },
+    allowImage: true,
     chatPrompt: '제출하면 여기에 공유돼요. 친구 표기문에 피드백도 남겨 주세요',
-    note: '5분 생성 + 2분 공유. 좋은 표기문 1~2개 읽어 주기.',
   },
 
   {
@@ -310,16 +334,28 @@ window.SLIDES = [
   {
     key: 'bias-data', section: 5, title: 'AI 이미지 속 편향: 성별·인종·나이',
     html: `<div class="bias-grid">
-        <div class="info-card orange"><div class="tag">성별</div><p class="big orange">판사 3% · 의사 7%</p><p>AI가 그린 판사·의사 중 여성 비율 (실제 미국 34%·39%). 엔지니어는 한 장만 여성이었고, 계산원·가사도우미 같은 저임금 직업에서는 여성이 실제보다 많았어요.</p></div>
-        <div class="info-card orange"><div class="tag">인종·피부색</div><p class="big orange">80% 이상</p><p>'수감자'를 그리게 하자 어두운 피부톤으로 그린 비율. 고소득 직업은 밝은 피부가 많았고, '테러리스트'에는 특정 종교를 떠올리게 하는 수염·두건을 그렸어요.</p></div>
-        <div class="info-card orange"><div class="tag">나이</div><p class="big orange">젊은 얼굴만</p><p>Midjourney 연구(2024)에서 '기자'는 젊은 사람만 그렸어요. 나이 든 인물은 전문가 역할에서 남성으로만 나왔고, 여성은 주름 없이 젊게만 그렸어요.</p></div>
+        <div class="info-card orange"><div class="tag">성별</div><p class="big orange">판사 3% · 의사 7%</p>${iconGrid(100, 3, 'AI가 그린 여성 판사', '남성 판사')}<p>실제 미국 여성 비율은 판사 34%·의사 39%. 반대로 계산원·가사도우미 같은 저임금 직업에서는 여성이 실제보다 많았어요.</p></div>
+        <div class="info-card orange"><div class="tag">인종·피부색</div><p class="big orange">80% 이상</p>${iconGrid(100, 80, '어두운 피부로 그림', '밝은 피부')}<p>'수감자'를 그리게 하자 어두운 피부톤으로 그린 비율. 고소득 직업은 밝은 피부가 대부분이었어요.</p></div>
+        <div class="info-card orange"><div class="tag">나이</div><p class="big orange">젊은 얼굴만</p><div class="age-row"><span class="age y">20대</span><span class="age y">20대</span><span class="age y">30대</span><span class="age y">20대</span><span class="age o">60대 남성 (전문가 역할만)</span></div><p>Midjourney 연구(2024)에서 '기자'는 젊은 사람만 그렸고, 나이 든 인물은 전문가 역할의 남성뿐이었어요. 여성은 주름 없이 젊게만 그렸어요.</p></div>
       </div>
       <div class="grid-2" style="margin-top:12px">
         <div class="callout small" style="margin-top:0"><b>왜 생길까?</b> 학습 데이터(인터넷 사진)에 담긴 사회의 고정관념을 AI가 배우고, 가장 '흔한' 모습을 골라 더 강하게 만들기 때문이에요.</div>
         <div class="callout small" style="margin-top:0"><b>반대로 고치려다 실패한 사례</b> 2024년 2월 구글 Gemini는 다양성을 억지로 넣다가 역사 속 인물을 사실과 다른 인종으로 그려, 사람 이미지 생성을 일시 중단했어요. 맥락이 중요해요.</div>
       </div>
-      <p class="source">출처: Bloomberg 「Humans Are Biased. Generative AI Is Even Worse」(2023) · T.J. Thomson·R.J. Thomas, Midjourney 이미지 분석(2024) · Google 발표(2024.2.)</p>`,
+      <p class="source">도식은 연구 수치를 100명 기준으로 나타낸 것 · 출처: Bloomberg 「Humans Are Biased. Generative AI Is Even Worse」(2023, Stable Diffusion 이미지 5,000여 장 분석) · T.J. Thomson·R.J. Thomas, Midjourney 이미지 분석(2024) · Google 발표(2024.2.)</p>`,
     chatPrompt: '가장 놀라웠던 결과는? 우리 주변의 비슷한 고정관념은?',
+  },
+  {
+    key: 'bias-examples', section: 5, title: '실제로 만들어 보면? 편향이 드러난 예시',
+    html: `<p class="sub">성별·나이·인종을 말하지 않고 직업만 넣어 AI에게 요청한 결과예요.</p>
+      <div class="ex-grid">
+        <figure class="ex"><div class="ex-img"><img src="images/bias-1.jpg" alt="AI가 만든 판사 이미지" onerror="this.closest('.ex').classList.add('empty')"><span class="ex-ph">🎨<br>지금 함께 만들어 봐요</span></div><figcaption><b>"판사의 사진을 만들어 줘"</b>결과에 나온 사람은 누구인가요?</figcaption></figure>
+        <figure class="ex"><div class="ex-img"><img src="images/bias-2.jpg" alt="AI가 만든 간호사 이미지" onerror="this.closest('.ex').classList.add('empty')"><span class="ex-ph">🎨<br>지금 함께 만들어 봐요</span></div><figcaption><b>"간호사의 사진을 만들어 줘"</b>성별과 나이를 살펴봐요</figcaption></figure>
+        <figure class="ex"><div class="ex-img"><img src="images/bias-3.jpg" alt="AI가 만든 CEO 이미지" onerror="this.closest('.ex').classList.add('empty')"><span class="ex-ph">🎨<br>지금 함께 만들어 봐요</span></div><figcaption><b>"CEO의 사진을 만들어 줘"</b>옷차림과 피부색을 살펴봐요</figcaption></figure>
+        <figure class="ex"><div class="ex-img"><img src="images/bias-4.jpg" alt="AI가 만든 프로그래머 이미지" onerror="this.closest('.ex').classList.add('empty')"><span class="ex-ph">🎨<br>지금 함께 만들어 봐요</span></div><figcaption><b>"프로그래머의 사진을 만들어 줘"</b>나이와 성별을 살펴봐요</figcaption></figure>
+      </div>
+      <div class="callout small"><b>함께 보기</b> 네 장 중 여성은 몇 명? 50대 이상은? 피부색은? 다음 장에서 직접 실험해 확인해요.</div>`,
+    chatPrompt: '예시 이미지에서 발견한 편향은?',
   },
   {
     key: 'bias-test', section: 5, title: '실험: 내가 직접 확인하는 AI 편향',
@@ -349,7 +385,25 @@ window.SLIDES = [
     chatPrompt: '친구들 결과를 보고 패턴을 찾아 보세요',
   },
 
+  {
+    key: 'bias-check', section: 5, title: 'AI 이미지 편향, 이렇게 점검해요',
+    html: `<p class="sub">AI 이미지를 쓰기 전에 아래 5단계를 확인해요. 눌러서 체크해 보세요.</p>`,
+    checks: [
+      { t: '여러 번 만들어 보기', d: '한 장만 보지 말고 같은 요청으로 4장 이상 만들어 패턴을 봐요.' },
+      { t: '세어 보기', d: '성별 · 나이 · 피부색 · 장애 여부 · 체형 · 옷차림을 하나씩 세어 봐요.' },
+      { t: '현실과 비교하기', d: '실제 통계나 내 주변과 비교해 어느 쪽이 지나치게 많거나 빠졌는지 확인해요.' },
+      { t: '다시 요청하기', d: '"다양한 나이·성별·인종의 ○○"처럼 구체적으로 요청해요. 단, 역사적 사실이나 실제 인물은 맥락을 지켜요.' },
+      { t: '쓰기 전에 묻기', d: '누가 빠졌나? 누군가를 고정관념으로 그리거나 깎아내리지 않나? 이 이미지를 본 사람이 상처받지 않을까?' },
+    ],
+    chatPrompt: '다시 요청한 프롬프트와 결과가 어떻게 달라졌는지 공유해요',
+    allowImage: true,
+  },
   // ───────────── ⑥ 상황 판정 (6분) ─────────────
+  {
+    key: 'div-6', section: 6, layout: 'divider', title: '상황 판정',
+    divider: { n: 6, sub: '배운 내용으로 판단해 봐요', mins: '4분' },
+    chatPrompt: '배운 내용으로 판단해 봐요',
+  },
   {
     key: 'judge', section: 6, title: '이거 괜찮을까? 상황 카드 판정',
     html: `<p class="sub">각 상황을 O(괜찮다) · △(조건부) · X(안 된다)로 판정하고, 이유는 채팅에 남겨요.</p>`,
@@ -363,19 +417,23 @@ window.SLIDES = [
       ],
     },
     chatPrompt: '판정이 가장 갈린 카드는? 내 이유를 적어 주세요',
-    note: '정리: 1 X/△(동의 받으면 O) · 2 X(초상권+퍼블리시티) · 3 X(대회 규정·허위 표시) · 4 O(내 저작물+투명한 표기).',
   },
 
   // ───────────── ⑦ 마무리 (3분) ─────────────
   {
-    key: 'wrap', section: 7, title: '오늘 기억할 세 가지',
+    key: 'div-7', section: 7, layout: 'divider', title: '마무리',
+    divider: { n: 7, sub: '나의 AI 사용 원칙', mins: '3분' },
+    chatPrompt: '나의 AI 사용 원칙',
+  },
+  {
+    key: 'wrap', section: 7, title: '오늘 기억할 네 가지',
     html: `<div class="takeaways">
         <div><b>1</b><p>사진 한 장에는 <strong>찍은 사람의 저작권</strong>과 <strong>찍힌 사람의 초상권</strong>이 함께 있다.</p></div>
         <div><b>2</b><p>AI 혼자 만든 결과물은 저작물이 아니다. <strong>내 기여를 남기고, AI 사용을 밝히자.</strong></p></div>
-        <div><b>3</b><p>올리기 전, 넣기 전, 만들기 전에 <strong>한 번 더 묻자</strong>: 허락 받았나? 표기했나?</p></div>
+        <div><b>3</b><p>AI는 데이터 속 고정관념을 배운다. <strong>성별·나이·인종을 세어 보고, 누가 빠졌는지 확인하자.</strong></p></div>
+        <div><b>4</b><p>올리기 전, 넣기 전, 만들기 전에 <strong>한 번 더 묻자</strong>: 허락 받았나? 표기했나? 공정한가?</p></div>
       </div>`,
     chatPrompt: '나의 AI 사용 원칙 한 줄을 남겨 주세요',
-    note: '원칙 한 줄 2~3개 소개하며 마무리. 수업 후 CSV 내보내기.',
   },
   {
     key: 'end', section: 7, layout: 'cover',
@@ -384,6 +442,5 @@ window.SLIDES = [
     html: `<p class="lead">오늘 남긴 원칙을 내일 AI를 쓸 때 한 번 떠올려 주세요.</p>
       <p class="source">참고 자료: 한국언론진흥재단 「미래를 이끄는 AI 리터러시」 · 문화체육관광부·한국저작권위원회 「생성형 AI 활용 저작물의 저작권 등록 안내서」「생성형 AI 결과물에 의한 저작권 분쟁 예방 안내서」(2025.7) · 성폭력범죄의 처벌 등에 관한 특례법 · 인공지능 발전과 신뢰 기반 조성 등에 관한 기본법 · 각 사 약관·도움말 (2026.10. 확인)</p>`,
     chatPrompt: '오늘 수업 한 줄 소감',
-    note: '',
   },
 ];
