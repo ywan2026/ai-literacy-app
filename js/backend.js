@@ -12,6 +12,7 @@
     });
     const h = H();
     let ch = null;
+    let rtStatus = 'INIT';
     const fire = (k, ...a) => h[k].forEach((f) => { try { f(...a); } catch (e) { console.error(e); } });
     const chk = ({ data, error }) => { if (error) throw error; return data; };
 
@@ -28,13 +29,18 @@
             const st = ch.presenceState();
             fire('presence', Object.values(st).map((arr) => arr[0]).filter(Boolean));
           });
-        await new Promise((res) => {
+        return await new Promise((res) => {
           let done = false;
-          const fin = () => { if (!done) { done = true; res(); } };
-          ch.subscribe(async (s) => { if (s === 'SUBSCRIBED') { try { await ch.track(meta); } catch (e) {} fin(); } });
-          setTimeout(fin, 6000);
+          const fin = (v) => { if (!done) { done = true; res(v); } };
+          ch.subscribe(async (s, err) => {
+            rtStatus = s;
+            if (s === 'SUBSCRIBED') { try { await ch.track(meta); } catch (e) {} fin(true); }
+            else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') { console.warn('realtime', s, err); fin(false); }
+          });
+          setTimeout(() => fin(false), 8000);
         });
       },
+      realtimeOk() { return rtStatus === 'SUBSCRIBED'; },
       async retrack(meta) { try { await ch.track(meta); } catch (e) {} },
       async getRoom() {
         const d = chk(await sb.from('rooms').select('*').eq('id', room).maybeSingle());
@@ -102,7 +108,8 @@
     return {
       mode: 'demo',
       on(k, f) { h[k].push(f); },
-      async connect(meta) { me = meta; emit({ k: 'presence', meta, hello: true }); },
+      async connect(meta) { me = meta; emit({ k: 'presence', meta, hello: true }); return true; },
+      realtimeOk() { return true; },
       async retrack(meta) { me = meta; emit({ k: 'presence', meta }); },
       async getRoom() { return load().room; },
       async isTeacher(code) { await delay(); return code === C.DEMO_TEACHER_CODE; },

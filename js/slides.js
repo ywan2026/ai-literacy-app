@@ -3,7 +3,7 @@
 //  key: 응답 저장용 고유값(바꾸면 기존 응답과 연결이 끊깁니다)
 //  note: 교사 화면에만 보이는 발표자 노트
 // ===============================================================
-window.SECTIONS = ['시작', '실태조사', '도입', '사진·초상권', 'AI 저작권', '생성 체험', '상황 판정', '마무리'];
+window.SECTIONS = ['시작', '실태조사', '도입', '사진·초상권', 'AI 저작권', '생성·편향', '상황 판정', '마무리'];
 
 window.SLIDES = [
   // ───────────── 시작 ─────────────
@@ -58,6 +58,28 @@ window.SLIDES = [
     note: '배경 왜곡, 귀걸이 짝, 머리카락 경계, 치아 등 단서 공유. "구별이 점점 어려워진다"로 마무리.',
   },
   {
+    key: 'quiz-video', section: 2, title: '이번엔 영상! 진짜 사람은 누구일까?',
+    html: `<p class="sub">여러 개의 영상 중 <b>실제 사람이 찍힌 영상</b>만 골라내는 게임이에요. 틀리면 기회가 줄고, 3번 틀리면 게임 오버! 2분 동안 도전해 보세요.</p>
+      <div class="grid-2">
+        <div class="info-card"><div class="tag">관찰 포인트</div><ul><li>눈 깜빡임이 자연스러운가?</li><li>입 모양이 말과 정확히 맞는가, 너무 규칙적이지 않은가?</li><li>머리카락·귀·치아의 경계가 흐려지지 않는가?</li></ul></div>
+        <div class="info-card orange"><div class="tag">생각해 보기</div><p>사진보다 영상이 더 믿음직해 보이는 이유는? 영상까지 가짜로 만들 수 있다면 무엇을 믿어야 할까?</p></div>
+      </div>`,
+    link: { url: 'https://turing.hourone.ai/', label: '진짜 사람 찾기 게임 열기', hint: '새 탭에서 열려요. 2분 뒤 돌아와 결과를 골라 주세요.' },
+    poll: { options: ['1레벨에서 게임 오버', '2~3레벨', '4~5레벨', '6레벨 이상'], label: '몇 레벨까지 갔나요?' },
+    chatPrompt: '가짜 영상을 알아챈 단서는 무엇이었나요?',
+  },
+  {
+    key: 'verify', section: 2, title: '이 사진, 진짜일까? 출처 확인 3단계',
+    html: `<div class="steps three">
+        <div class="step"><b>1</b><div><h4>역이미지 검색</h4><p>Google 렌즈·네이버 스마트렌즈에 사진을 올려 <b>처음 올라온 곳과 날짜</b>를 찾아요. 오래된 사진을 새 사건처럼 쓰는 경우가 많아요.</p></div></div>
+        <div class="step"><b>2</b><div><h4>AI 표시 확인</h4><p>Gemini에 이미지를 올려 "AI로 만든 거야?"라고 물으면 구글의 숨은 워터마크(<b>SynthID</b>)를 확인해 줘요. <b>콘텐츠 자격증명(CR 표시)</b>이 있으면 생성·편집 이력을 볼 수 있어요.</p></div></div>
+        <div class="step"><b>3</b><div><h4>맥락 확인</h4><p>믿을 만한 언론이나 공식 계정도 같은 내용을 전하는지 비교해요. 감정을 자극하는 제목일수록 한 번 더 의심해요.</p></div></div>
+      </div>
+      <div class="callout small"><b>한계도 알아 두기</b> 워터마크는 그 회사 AI로 만든 이미지만 확인할 수 있고, 캡처하거나 편집하면 사라지기도 해요. "표시가 없다 = 진짜"는 아니에요.</div>`,
+    link: { url: 'https://lens.google/', label: 'Google 렌즈 열기', hint: '오늘 SNS에서 본 사진 하나로 직접 해 보세요.' },
+    chatPrompt: '역이미지 검색을 해 보니 무엇을 알게 됐나요?',
+  },
+  {
     key: 'data-flow', section: 2, title: '내가 올린 사진은 어디로 갈까?',
     html: `<div class="flow">
         <div class="flow-step"><b>1</b><h4>전송·저장</h4><p>사진이 내 기기를 떠나 회사 서버에 저장돼요</p></div>
@@ -98,7 +120,7 @@ window.SLIDES = [
             <td>Google 계정 연령 기준</td>
             <td>만 18세 이상</td></tr>
         </tbody></table></div>
-      <div class="callout small"><b>공통점</b> ① 끄지 않으면 쓰일 수 있다 ② 끈 뒤에도 <u>이미 학습된 것은 되돌릴 수 없다</u> ③ 좋아요·싫어요 피드백을 누르면 그 대화가 쓰일 수 있다</div>
+      <div class="callout small"><b>공통점</b> ① 끄지 않으면 쓰일 수 있다 ② 끈 뒤에도 <u>이미 학습된 것은 되돌릴 수 없다</u> ③ 👍·👎 피드백을 누르면, 학습을 꺼 놨어도 <u>그 대화 전체</u>가 회사로 보내져 개선에 쓰일 수 있다</div>
       <p class="source">출처: OpenAI 도움말 「모델 성능 향상을 위한 데이터 사용」, Google 「Gemini 앱 개인정보 보호 고지」, Anthropic 「Updates to our Consumer Terms」(2025.8.28). 2026년 10월 확인 · 약관은 바뀔 수 있어요.</p>`,
     chatPrompt: '지금 내가 쓰는 AI의 설정을 확인해 봤나요? 켜져 있었나요?',
     note: '30초 동안 실제 설정 화면 확인하게 해도 좋음. 정책은 바뀔 수 있으니 "직접 확인하는 습관"을 강조.',
@@ -175,6 +197,18 @@ window.SLIDES = [
     note: '③ 단원 마무리. 시간 체크(누적 약 23분).',
   },
 
+  {
+    key: 'forget', section: 3, title: '어릴 때 올린 내 사진, 지울 수 있을까?',
+    html: `<div class="grid-2">
+        <div class="info-card blue"><div class="tag">개인정보보호위원회</div><h3>지우개 서비스 (디지털 잊힐 권리)</h3>
+          <ul><li><b>만 30세 미만</b>이 <b>만 19세 미만</b>일 때 올린 게시물이 대상 (2024.1. 확대)</li><li>내 개인정보가 담긴 글·사진의 <b>삭제나 가림 처리</b>를 도와줘요</li><li>개인정보 포털에서 신청 · 신청 조건은 바뀔 수 있으니 최신 내용 확인</li></ul></div>
+        <div class="info-card"><div class="tag">스스로 할 수 있는 일</div><h3>올리기 전, 그리고 올린 뒤</h3>
+          <ul><li>내가 올린 것: 계정에서 직접 삭제, 공개 범위 줄이기</li><li>남이 올린 내 사진: 플랫폼의 <b>초상권·개인정보 침해 신고</b> 기능 이용</li><li>성적 합성물·불법촬영물: 앞에서 본 <b>디지털성범죄피해자지원센터</b>가 삭제를 지원</li></ul></div>
+      </div>
+      <div class="callout"><b>하지만</b> 한 번 퍼진 사진은 다른 사람이 저장하거나 AI 학습에 쓰였을 수 있어 완전히 지우기 어려워요. 가장 확실한 방법은 <u>올리기 전에 한 번 더 생각하기</u>예요.</div>`,
+    chatPrompt: '지우고 싶은 옛 게시물이 있나요? (내용은 쓰지 말고 있다/없다만)',
+  },
+
   // ───────────── ④ AI 생성물 저작권 (11분) ─────────────
   {
     key: 'ai-copyright', section: 4, title: 'AI가 만든 그림, 저작권이 있을까?',
@@ -204,13 +238,26 @@ window.SLIDES = [
     cards: {
       choices: ['O', '△', 'X'],
       items: [
-        { title: '지민', text: '그림은 못 그리지만 프롬프트를 수백 번 고쳐 가장 마음에 드는 결과를 골라 그대로 냈다.' },
-        { title: '서연', text: '일러스트 작가. AI 결과물을 참고 자료로만 보고, 구도와 색을 바꿔 직접 다시 그렸다.' },
-        { title: '하준', text: '특정 작가의 그림 수백 장을 허락 없이 AI에 학습시켜, 그 작가 화풍의 그림을 만들어 냈다.' },
+        { title: '지민', text: '그림은 못 그리지만 프롬프트를 수백 번 고쳐 가장 마음에 드는 결과를 골라 그대로 냈다.', answer: 'X', explain: '프롬프트를 고치고 고르는 것만으로는 원칙적으로 인정되지 않아요. 여러 결과물을 창작적으로 선택·배열해 엮었다면 그 편집 부분만 인정될 수 있어요.' },
+        { title: '서연', text: '일러스트 작가. AI 결과물을 참고 자료로만 보고, 구도와 색을 바꿔 직접 다시 그렸다.', answer: 'O', explain: '직접 그린 그림이므로 사람의 창작물로 인정돼요. AI는 참고 자료였을 뿐이에요.' },
+        { title: '하준', text: '특정 작가의 그림 수백 장을 허락 없이 AI에 학습시켜, 그 작가 화풍의 그림을 만들어 냈다.', answer: 'X', explain: '하준의 저작권은 인정되기 어렵고, 원작가의 그림과 비슷하면 오히려 원작가의 저작권을 침해할 수 있어요.' },
       ],
     },
     chatPrompt: '내 판정의 이유를 적어 주세요 (예: 서연 O — 직접 그렸으니까)',
     note: '안내서 기준: 지민 = 원칙적으로 불인정(선택·배열에 창작성 있으면 일부), 서연 = 직접 그린 부분 인정, 하준 = 인정 어렵고 오히려 원작가 권리 침해 소지.',
+  },
+  {
+    key: 'train-data', section: 4, title: 'AI는 누구의 작품으로 공부했을까?',
+    html: `<p class="sub">AI는 인터넷의 글·그림·음악을 대량으로 학습해요. 그 작품의 주인들이 소송을 걸기 시작했어요.</p>
+      <div class="cases-list">
+        <div class="mini"><b>작가들 vs Anthropic (미국)</b><span>법원은 정식으로 산 책으로 학습한 것은 공정이용이지만, 불법 복제 사이트에서 내려받아 보관한 것은 침해라고 판단했어요. 2026년 7월 <b>15억 달러(약 2조 원)</b> 합의가 최종 승인됐고, 한강 「소년이 온다」 영문판 등 한국 작가 책도 보상 대상이에요.</span></div>
+        <div class="mini"><b>음악 저작권 단체 vs OpenAI (독일)</b><span>2025년 11월 뮌헨 법원은 ChatGPT가 노래 가사를 외워 그대로 재현한 것을 저작권 침해로 판결했어요.</span></div>
+        <div class="mini"><b>지상파 3사 vs 네이버 (한국)</b><span>방송사 뉴스를 허락 없이 AI 학습에 썼다는 소송이 진행 중이에요. 네이버는 제휴 약관에 따라 쓸 수 있다고 맞서고 있어요.</span></div>
+        <div class="mini"><b>뉴욕타임스 vs OpenAI (미국)</b><span>기사 수백만 건을 무단 학습했다는 소송이 진행 중이에요.</span></div>
+      </div>
+      <div class="callout small"><b>내 작품을 지키려면</b> 서비스 설정에서 학습 사용 끄기 · 게시물에 'AI 학습 금지' 이용 조건 밝히기 · 그림을 AI가 학습하기 어렵게 만드는 보호 도구(예: Glaze) 쓰기</div>`,
+    poll: { label: '내가 SNS에 올린 그림이 허락 없이 AI 학습에 쓰였다면?', options: ['공개했으니 괜찮다', '출처만 밝히면 괜찮다', '보상을 받아야 한다', '허락 없이는 절대 안 된다'] },
+    chatPrompt: '그렇게 고른 이유는?',
   },
   {
     key: 'prevent', section: 4, title: 'AI 저작권 침해를 막는 5가지 습관',
@@ -254,6 +301,54 @@ window.SLIDES = [
     note: '5분 생성 + 2분 공유. 좋은 표기문 1~2개 읽어 주기.',
   },
 
+  {
+    key: 'bias-predict', section: 5, title: '예측해 봐요: AI가 그린 "판사" 300명 중 여성은?',
+    html: `<p class="sub">2023년 블룸버그가 이미지 생성 AI(Stable Diffusion)로 직업별 인물 사진을 수천 장 만들어 분석했어요. 미국의 실제 여성 판사 비율은 약 34%예요.</p>`,
+    poll: { options: ['약 3%', '약 15%', '약 34% (실제와 비슷)', '약 50%'] },
+    chatPrompt: '왜 그렇게 예측했나요?',
+  },
+  {
+    key: 'bias-data', section: 5, title: 'AI 이미지 속 편향: 성별·인종·나이',
+    html: `<div class="bias-grid">
+        <div class="info-card orange"><div class="tag">성별</div><p class="big orange">판사 3% · 의사 7%</p><p>AI가 그린 판사·의사 중 여성 비율 (실제 미국 34%·39%). 엔지니어는 한 장만 여성이었고, 계산원·가사도우미 같은 저임금 직업에서는 여성이 실제보다 많았어요.</p></div>
+        <div class="info-card orange"><div class="tag">인종·피부색</div><p class="big orange">80% 이상</p><p>'수감자'를 그리게 하자 어두운 피부톤으로 그린 비율. 고소득 직업은 밝은 피부가 많았고, '테러리스트'에는 특정 종교를 떠올리게 하는 수염·두건을 그렸어요.</p></div>
+        <div class="info-card orange"><div class="tag">나이</div><p class="big orange">젊은 얼굴만</p><p>Midjourney 연구(2024)에서 '기자'는 젊은 사람만 그렸어요. 나이 든 인물은 전문가 역할에서 남성으로만 나왔고, 여성은 주름 없이 젊게만 그렸어요.</p></div>
+      </div>
+      <div class="grid-2" style="margin-top:12px">
+        <div class="callout small" style="margin-top:0"><b>왜 생길까?</b> 학습 데이터(인터넷 사진)에 담긴 사회의 고정관념을 AI가 배우고, 가장 '흔한' 모습을 골라 더 강하게 만들기 때문이에요.</div>
+        <div class="callout small" style="margin-top:0"><b>반대로 고치려다 실패한 사례</b> 2024년 2월 구글 Gemini는 다양성을 억지로 넣다가 역사 속 인물을 사실과 다른 인종으로 그려, 사람 이미지 생성을 일시 중단했어요. 맥락이 중요해요.</div>
+      </div>
+      <p class="source">출처: Bloomberg 「Humans Are Biased. Generative AI Is Even Worse」(2023) · T.J. Thomson·R.J. Thomas, Midjourney 이미지 분석(2024) · Google 발표(2024.2.)</p>`,
+    chatPrompt: '가장 놀라웠던 결과는? 우리 주변의 비슷한 고정관념은?',
+  },
+  {
+    key: 'bias-test', section: 5, title: '실험: 내가 직접 확인하는 AI 편향',
+    html: `<div class="grid-2 make">
+        <div>
+          <ol class="howto">
+            <li>아래 직업 중 하나를 골라 <b>성별·나이·인종은 말하지 말고</b> "<b>○○의 사진을 만들어 줘</b>"라고만 요청</li>
+            <li>나온 인물의 <b>성별·나이대·피부색</b>을 기록해 제출</li>
+            <li>시간이 남으면 "다양한 나이·성별·인종의 ○○"로 다시 요청해 비교</li>
+          </ol>
+          <div class="chips">${['간호사', '소방관', 'CEO', '유치원 교사', '프로그래머', '과학자', '요리사', '청소 노동자', '운동선수', '대학 교수'].map((j) => '<span class="chip">' + j + '</span>').join('')}</div>
+        </div>
+        <div class="submit-host"></div>
+      </div>`,
+    link: { url: 'https://chatgpt.com/', label: 'ChatGPT 열기', hint: '이미지가 나오면 이 화면으로 돌아와 기록해 주세요.' },
+    submit: {
+      fields: [
+        { id: 'job', label: '요청한 직업', options: ['간호사', '소방관', 'CEO', '유치원 교사', '프로그래머', '과학자', '요리사', '청소 노동자', '운동선수', '대학 교수'] },
+        { id: 'gender', label: '나온 인물의 성별', options: ['남성', '여성', '여러 명이 섞여 있음', '알기 어려움'] },
+        { id: 'age', label: '나이대', options: ['10~20대', '30~40대', '50대 이상', '여러 나이대'] },
+        { id: 'skin', label: '피부색·인종', options: ['밝은 피부(백인으로 보임)', '동아시아인으로 보임', '어두운 피부', '여러 인종이 섞여 있음'] },
+        { id: 'note', label: '눈에 띈 고정관념 (선택)', placeholder: '예: 간호사는 모두 젊은 여성, CEO는 정장 입은 중년 남성', rows: 2 },
+      ],
+      button: '결과 제출하고 공유',
+    },
+    tally: ['job', 'gender', 'age', 'skin'],
+    chatPrompt: '친구들 결과를 보고 패턴을 찾아 보세요',
+  },
+
   // ───────────── ⑥ 상황 판정 (6분) ─────────────
   {
     key: 'judge', section: 6, title: '이거 괜찮을까? 상황 카드 판정',
@@ -261,10 +356,10 @@ window.SLIDES = [
     cards: {
       choices: ['O', '△', 'X'],
       items: [
-        { title: '카드 1', text: '친구들 동의 없이 단체사진을 애니풍으로 바꿔 학급 SNS에 올렸다.' },
-        { title: '카드 2', text: '아이돌 사진을 AI로 합성한 굿즈를 만들어 중고 거래 앱에서 팔았다.' },
-        { title: '카드 3', text: 'ChatGPT로 만든 그림을 AI 사용 표기 없이 교내 그림 대회에 냈다.' },
-        { title: '카드 4', text: '직접 찍은 풍경 사진을 AI로 보정하고 "AI 보정" 표기 후 블로그에 올렸다.' },
+        { title: '카드 1', text: '친구들 동의 없이 단체사진을 애니풍으로 바꿔 학급 SNS에 올렸다.', answer: 'X', explain: '그림체를 바꿔도 누구인지 알아볼 수 있으면 초상권 침해예요. 친구들의 동의를 받으면 괜찮아요.' },
+        { title: '카드 2', text: '아이돌 사진을 AI로 합성한 굿즈를 만들어 중고 거래 앱에서 팔았다.', answer: 'X', explain: '초상권 침해에 더해, 유명인의 얼굴로 돈을 버는 것은 부정경쟁방지법상 퍼블리시티 침해가 될 수 있어요. 원본 사진의 저작권도 문제예요.' },
+        { title: '카드 3', text: 'ChatGPT로 만든 그림을 AI 사용 표기 없이 교내 그림 대회에 냈다.', answer: 'X', explain: 'AI 결과물을 내 그림처럼 낸 것이라 대회 규정 위반이자 정직하지 않은 행동이에요. AI 허용 여부를 먼저 확인하고, 썼다면 밝혀야 해요.' },
+        { title: '카드 4', text: '직접 찍은 풍경 사진을 AI로 보정하고 "AI 보정" 표기 후 블로그에 올렸다.', answer: 'O', explain: '내가 찍은 사진(내 저작물)이고, 사람이 나오지 않으며, AI 사용도 밝혔어요. 모범 사례예요.' },
       ],
     },
     chatPrompt: '판정이 가장 갈린 카드는? 내 이유를 적어 주세요',
@@ -284,8 +379,8 @@ window.SLIDES = [
   },
   {
     key: 'end', section: 7, layout: 'cover',
-    kicker: '수고했어요',
-    title: '고맙습니다',
+    kicker: '오늘 수업 끝',
+    title: '수고했습니다',
     html: `<p class="lead">오늘 남긴 원칙을 내일 AI를 쓸 때 한 번 떠올려 주세요.</p>
       <p class="source">참고 자료: 한국언론진흥재단 「미래를 이끄는 AI 리터러시」 · 문화체육관광부·한국저작권위원회 「생성형 AI 활용 저작물의 저작권 등록 안내서」「생성형 AI 결과물에 의한 저작권 분쟁 예방 안내서」(2025.7) · 성폭력범죄의 처벌 등에 관한 특례법 · 인공지능 발전과 신뢰 기반 조성 등에 관한 기본법 · 각 사 약관·도움말 (2026.10. 확인)</p>`,
     chatPrompt: '오늘 수업 한 줄 소감',

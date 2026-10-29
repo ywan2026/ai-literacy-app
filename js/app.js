@@ -12,11 +12,11 @@
   const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16); }));
 
   const configured = !!(C.SUPABASE_URL && C.SUPABASE_ANON_KEY);
-  if (configured && !window.supabase) {
-    document.body.innerHTML = '<p style="padding:40px;font:16px system-ui">Supabase 라이브러리를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.</p>';
-    return;
-  }
-  const api = window.createBackend(ROOM, C);
+  const demo = qs.get('demo') === '1';   // 데모 모드는 주소 뒤에 ?demo=1 을 붙였을 때만
+  const stop = (msg) => { document.body.innerHTML = '<div style="max-width:520px;margin:15vh auto;padding:28px;font:16px/1.6 -apple-system,system-ui,sans-serif;background:#fff;border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.08)">' + msg + '</div>'; document.body.style.background = '#f2f2f7'; };
+  if (!demo && !configured) { stop('<b>서버 설정이 비어 있어요.</b><br>js/config.js 에 SUPABASE_URL 과 키를 넣어 GitHub에 다시 올려 주세요.'); return; }
+  if (!demo && !window.supabase) { stop('<b>Supabase 라이브러리를 불러오지 못했어요.</b><br>인터넷 연결을 확인하고 새로고침해 주세요.'); return; }
+  const api = demo ? window.createBackend(ROOM, { ...C, SUPABASE_URL: '', SUPABASE_ANON_KEY: '' }) : window.createBackend(ROOM, C);
 
   const S = {
     me: null, teacher: false, code: null,
@@ -40,7 +40,7 @@
   const fail = (e) => { console.error(e); toast('문제가 생겼어요: ' + (e && e.message ? e.message : e)); };
 
   // ---------------- 로그인 ----------------
-  $('modeBadge').textContent = api.mode === 'demo' ? '데모 모드 · 이 브라우저 안에서만 동기화됩니다 (교사 코드: ' + C.DEMO_TEACHER_CODE + ')' : '';
+  $('modeBadge').textContent = api.mode === 'demo' ? '데모 모드 · 이 브라우저 안에서만 동기화됩니다' : '';
   const saved = store.get('ai-lit:' + ROOM + ':me');
   if (saved && saved.name) $('nameInput').value = saved.name;
 
@@ -50,6 +50,7 @@
     if (!name) return;
     $('loginBtn').disabled = true; $('loginBtn').textContent = '접속 중…';
     try {
+      await api.getRoom();   // 수업 방이 있는지 먼저 확인
       const isT = await api.isTeacher(name);
       if (isT) {
         S.teacher = true; S.code = name;
@@ -92,27 +93,44 @@
     api.on('presence', (list) => { S.presence = list; renderRoster(); });
 
     await reload();
-    await api.connect({ id: S.me.id, name: S.me.name, role: S.teacher ? 'teacher' : 'student' });
-    setConn(true);
+    S.rendered = -1;
+    const meta = () => ({ id: S.me.id, name: S.me.name, role: S.teacher ? 'teacher' : 'student' });
+    const rtOk = await api.connect(meta());
+    setConn(true, rtOk);
     render();
+    if (!rtOk && S.teacher) toast('실시간 연결이 안 돼서 3초마다 새로고침 방식으로 동작해요');
+
+    // 실시간이 끊겨도 동작하도록 주기적으로 동기화 (실시간 정상: 10초, 실패: 3초)
+    const tick = async () => {
+      if (document.visibilityState === 'visible') { await reload(true); render(); }
+      setTimeout(tick, api.realtimeOk && api.realtimeOk() ? 10000 : 3000);
+    };
+    setTimeout(tick, 3000);
+    // 학생 접속 기록(명단용) 30초마다 갱신
+    if (!S.teacher) setInterval(() => { if (document.visibilityState === 'visible') api.upsertParticipant(S.me).catch(() => {}); }, 30000);
 
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') { reload().then(render); api.retrack({ id: S.me.id, name: S.me.name, role: S.teacher ? 'teacher' : 'student' }); }
+      if (document.visibilityState === 'visible') { reload(true).then(render); api.retrack(meta()); if (!S.teacher) api.upsertParticipant(S.me).catch(() => {}); }
     });
-    window.addEventListener('online', () => { setConn(true); reload().then(render); });
+    window.addEventListener('online', () => { setConn(true, true); reload(true).then(render); });
     window.addEventListener('offline', () => setConn(false));
   }
 
-  function setConn(ok) { const c = $('conn'); c.classList.toggle('off', !ok); c.title = ok ? '연결됨' + (api.mode === 'demo' ? ' (데모)' : '') : '연결 끊김'; }
+  function setConn(ok, rt) {
+    const c = $('conn'); c.classList.toggle('off', !ok); c.classList.toggle('slow', ok && rt === false);
+    c.title = !ok ? '연결 끊김' : (api.mode === 'demo' ? '데모 모드' : rt === false ? '연결됨 (새로고침 방식)' : '실시간 연결됨');
+  }
 
-  async function reload() {
+  async function reload(quiet) {
     try {
       const [room, msgs, resps, parts] = await Promise.all([api.getRoom(), api.listMessages(), api.listResponses(), S.teacher ? api.listParticipants() : Promise.resolve([])]);
+      const resetChanged = S.room.reset_at !== undefined && room.reset_at && room.reset_at !== S.room.reset_at;
       S.room = room; S.messages = msgs || [];
       S.responses = new Map((resps || []).map((r) => [rkey(r), r]));
       S.participants = new Map((parts || []).map((p) => [p.id, p]));
-      S.rendered = -1;
-    } catch (e) { fail(e); }
+      if (!quiet || resetChanged) S.rendered = -1;
+      setConn(true, api.realtimeOk ? api.realtimeOk() : true);
+    } catch (e) { if (quiet) setConn(false); else fail(e); }
   }
 
   // ---------------- 렌더링 ----------------
@@ -127,7 +145,7 @@
     $('nextBtn').disabled = $('tbNext').disabled = idx === SLIDES.length - 1;
     $('tbLock').textContent = S.room.chat_locked ? '채팅 잠금 해제' : '채팅 잠금';
     $('tbLock').classList.toggle('on', !!S.room.chat_locked);
-    renderChat(); renderLive();
+    renderChat(); renderLive(); renderRoster();
   }
 
   function renderTabs(s) {
@@ -155,28 +173,30 @@
     if (s.flips) h += `<div class="flips">${s.flips.map((f, i) =>
       `<button class="flip" data-flip="${i}"><div class="flip-inner"><div class="flip-front"><span class="flip-tag">${esc(f.tag)}</span><p>${esc(f.q)}</p><span class="flip-tap">눌러서 해설 보기</span></div><div class="flip-back"><span class="flip-tag">해설</span><p>${f.a}</p></div></div></button>`).join('')}</div>`;
     if (s.cards) h += `<div class="judge">${s.cards.items.map((c, i) =>
-      `<div class="jcard" data-card="${i}"><div class="jhead"><b>${esc(c.title)}</b><span class="jn"></span></div><p>${esc(c.text)}</p>
+      `<div class="jcard" data-card="${i}"><div class="jhead"><b>${esc(c.title)}</b><span class="jn"></span>${c.answer && S.teacher ? `<button class="reveal-btn" data-reveal="${i}">정답 확인</button>` : ''}</div><p>${esc(c.text)}</p>
         <div class="jbtns">${s.cards.choices.map((ch) => `<button class="jb" data-choice="${esc(ch)}"><span class="jl">${esc(ch)}</span><span class="jc"></span></button>`).join('')}</div>
-        <div class="jbar">${s.cards.choices.map((ch) => `<i data-bar="${esc(ch)}"></i>`).join('')}</div></div>`).join('')}</div>`;
+        <div class="jbar">${s.cards.choices.map((ch) => `<i data-bar="${esc(ch)}"></i>`).join('')}</div>
+        <div class="janswer" hidden></div>${S.teacher ? '<div class="jnames"></div>' : ''}</div>`).join('')}</div>`;
     el.innerHTML = h;
     el.scrollTop = 0;
 
     if (s.submit) {
       const host = el.querySelector('.submit-host') || el.appendChild(Object.assign(document.createElement('div'), { className: 'submit-host' }));
-      host.innerHTML = `<form class="submit">${s.submit.fields.map((f) =>
-        `<label><span>${esc(f.label)}</span><textarea data-field="${f.id}" rows="${f.rows || 2}" maxlength="400" placeholder="${esc(f.placeholder || '')}"></textarea></label>`).join('')}
+      host.innerHTML = `<form class="submit">${s.submit.fields.map((f) => f.options
+        ? `<label><span>${esc(f.label)}</span><select data-field="${f.id}"><option value="">선택하세요</option>${f.options.map((o) => `<option>${esc(o)}</option>`).join('')}</select></label>`
+        : `<label><span>${esc(f.label)}</span><textarea data-field="${f.id}" rows="${f.rows || 2}" maxlength="400" placeholder="${esc(f.placeholder || '')}"></textarea></label>`).join('')}
         <button class="btn primary" type="submit">${esc(s.submit.button || '제출')}</button><span class="submit-state"></span></form>`;
       const mine = myResp(s.key, 'submit');
-      if (mine && mine.value) host.querySelectorAll('textarea').forEach((t) => (t.value = mine.value[t.dataset.field] || ''));
+      if (mine && mine.value) host.querySelectorAll('[data-field]').forEach((t) => (t.value = mine.value[t.dataset.field] || ''));
+      if (s.tally) el.insertAdjacentHTML('beforeend', '<div class="tally"></div>');
       host.querySelector('form').addEventListener('submit', (e) => { e.preventDefault(); submitForm(s, host); });
     }
     // 이벤트
     el.querySelectorAll('.opt').forEach((b) => b.addEventListener('click', () => vote(s, +b.dataset.opt)));
     el.querySelectorAll('.flip').forEach((b) => b.addEventListener('click', () => b.classList.toggle('flipped')));
     el.querySelectorAll('.jb').forEach((b) => b.addEventListener('click', () => judge(s, +b.closest('.jcard').dataset.card, b.dataset.choice)));
+    el.querySelectorAll('.reveal-btn').forEach((b) => b.addEventListener('click', () => toggleReveal(s, +b.dataset.reveal)));
 
-    $('notes').innerHTML = s.note ? `<b>발표자 노트</b> ${esc(s.note)}` : '';
-    $('notes').hidden = !s.note;
     $('chatSub').textContent = s.title;
     $('chatText').placeholder = s.chatPrompt || '의견을 입력하세요';
   }
@@ -213,14 +233,34 @@
       });
       const t = el.querySelector('.poll-total'); if (t) t.textContent = `${total}명 응답`;
     }
+    if (s.tally) {
+      const box = el.querySelector('.tally');
+      if (box) {
+        const [rowF, ...cols] = s.tally.map((id) => s.submit.fields.find((f) => f.id === id));
+        const subs = respsFor(s.key, 'submit').map((r) => r.value || {}).filter((v) => v[rowF.id]);
+        const groups = new Map(); subs.forEach((v) => { if (!groups.has(v[rowF.id])) groups.set(v[rowF.id], []); groups.get(v[rowF.id]).push(v); });
+        const cell = (arr, f) => { const n = {}; arr.forEach((v) => { if (v[f.id]) n[v[f.id]] = (n[v[f.id]] || 0) + 1; }); return Object.entries(n).sort((a, b) => b[1] - a[1]).map(([k, c]) => `<span class="tchip">${esc(k)} <b>${c}</b></span>`).join('') || '<i>—</i>'; };
+        box.innerHTML = subs.length ? `<div class="tally-head"><b>우리 반 실험 결과</b><span>${subs.length}명 제출</span></div><div class="table-wrap"><table class="terms tally-t"><thead><tr><th>${esc(rowF.label)}</th>${cols.map((f) => `<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>${[...groups].map(([k, arr]) => `<tr><th>${esc(k)} <small>${arr.length}</small></th>${cols.map((f) => `<td>${cell(arr, f)}</td>`).join('')}</tr>`).join('')}<tr class="total"><th>전체</th>${cols.map((f) => `<td>${cell(subs, f)}</td>`).join('')}</tr></tbody></table></div>` : '<div class="tally-head"><b>우리 반 실험 결과</b><span>제출하면 여기에 모여요</span></div>';
+      }
+    }
     if (s.cards) {
+      const revealed = revealedSet(s);
       el.querySelectorAll('.jcard').forEach((card) => {
         const i = card.dataset.card; const rs = respsFor(s.key, 'card-' + i);
-        const mine = myResp(s.key, 'card-' + i); const show = S.teacher || !!mine;
+        const item = s.cards.items[+i]; const rev = revealed.has(+i) && item.answer;
+        const mine = myResp(s.key, 'card-' + i); const show = S.teacher || !!mine || rev;
+        card.classList.toggle('revealed', !!rev);
+        const ans = card.querySelector('.janswer');
+        ans.hidden = !rev;
+        if (rev) ans.innerHTML = `<b>정답 ${esc(item.answer)}</b> ${esc(item.explain || '')}`;
+        card.querySelectorAll('.jb').forEach((b) => b.classList.toggle('correct', !!rev && b.dataset.choice === item.answer));
+        const rb = card.querySelector('.reveal-btn'); if (rb) { rb.textContent = rev ? '정답 숨기기' : '정답 확인'; rb.classList.toggle('on', !!rev); }
+        const nm = card.querySelector('.jnames');
+        if (nm) nm.innerHTML = s.cards.choices.map((c) => { const who = rs.filter((r) => r.value === c).map((r) => esc(r.name)); return `<div class="jname-row"><span class="jname-c" data-c="${esc(c)}">${esc(c)}</span><span>${who.length ? who.join(', ') : '<i>없음</i>'}</span></div>`; }).join('');
         const n = {}; s.cards.choices.forEach((c) => (n[c] = 0)); rs.forEach((r) => { if (n[r.value] != null) n[r.value]++; });
         const tot = rs.length;
         card.querySelectorAll('.jb').forEach((b) => {
-          b.classList.toggle('mine', mine && mine.value === b.dataset.choice);
+          b.classList.toggle('mine', !!(mine && mine.value === b.dataset.choice));
           b.querySelector('.jc').textContent = show && tot ? n[b.dataset.choice] : '';
         });
         card.querySelectorAll('[data-bar]').forEach((bar) => { bar.style.flexGrow = show && tot ? n[bar.dataset.bar] : 0; });
@@ -230,6 +270,17 @@
     }
   }
 
+  function revealedSet(s) {
+    let best = null;
+    for (const r of S.responses.values()) if (r.slide_key === s.key && r.item === 'reveal' && (!best || String(r.updated_at) > String(best.updated_at))) best = r;
+    return new Set(best && Array.isArray(best.value) ? best.value : []);
+  }
+  async function toggleReveal(s, i) {
+    const set = revealedSet(s); set.has(i) ? set.delete(i) : set.add(i);
+    const row = { slide_key: s.key, item: 'reveal', participant_id: S.me.id, name: '선생님', value: [...set].sort(), updated_at: new Date().toISOString() };
+    S.responses.set(rkey(row), row); renderLive();
+    try { const { updated_at, ...r } = row; await api.upsertResponse(r); } catch (e) { fail(e); }
+  }
   async function vote(s, i) {
     if (S.teacher) return toast('교사 화면에서는 결과만 볼 수 있어요');
     const mine = myResp(s.key, 'poll');
@@ -249,8 +300,10 @@
   async function submitForm(s, host) {
     if (S.teacher) return toast('교사 화면에서는 제출할 수 없어요');
     const value = {}; let any = false;
-    host.querySelectorAll('textarea').forEach((t) => { value[t.dataset.field] = t.value.trim(); if (value[t.dataset.field]) any = true; });
+    host.querySelectorAll('[data-field]').forEach((t) => { value[t.dataset.field] = t.value.trim(); if (value[t.dataset.field]) any = true; });
     if (!any) return toast('내용을 입력해 주세요');
+    const miss = s.submit.fields.find((f) => f.options && !value[f.id]);
+    if (miss) return toast(miss.label + '을(를) 골라 주세요');
     const state = host.querySelector('.submit-state');
     try {
       await api.upsertResponse({ slide_key: s.key, item: 'submit', participant_id: S.me.id, name: S.me.name, value });
@@ -330,6 +383,9 @@
   function renderRoster() {
     if (!S.teacher) return;
     const online = new Map(S.presence.filter((p) => p.role !== 'teacher').map((p) => [p.id, p]));
+    // 실시간 접속 정보가 없을 때는 최근 70초 안에 접속 기록이 있는 학생을 접속 중으로 표시
+    const now = Date.now();
+    S.participants.forEach((p) => { if (!online.has(p.id) && p.last_seen && now - new Date(p.last_seen).getTime() < 70000) online.set(p.id, p); });
     $('rosterN').textContent = online.size;
     if ($('roster').hidden) return;
     const all = new Map(S.participants);
@@ -358,7 +414,7 @@
         return { poll: '투표', submit: '제출' }[item] || item;
       };
       const rows = [['구분', '슬라이드', '슬라이드 제목', '이름', '항목', '응답', '시간']];
-      resps.forEach((r) => { const s = SLIDES[idx[r.slide_key]]; rows.push(['응답', (idx[r.slide_key] ?? -1) + 1, s ? s.title : r.slide_key, r.name, itemName(s, r.item), fmt(s, r.item, r.value), r.updated_at]); });
+      resps.filter((r) => r.item !== 'reveal').forEach((r) => { const s = SLIDES[idx[r.slide_key]]; rows.push(['응답', (idx[r.slide_key] ?? -1) + 1, s ? s.title : r.slide_key, r.name, itemName(s, r.item), fmt(s, r.item, r.value), r.updated_at]); });
       msgs.forEach((m) => { const s = SLIDES[idx[m.slide_key]]; rows.push(['채팅' + (m.hidden ? '(숨김)' : ''), (idx[m.slide_key] ?? -1) + 1, s ? s.title : m.slide_key, m.name, '', m.body, m.created_at]); });
       const body = rows.slice(1).sort((a, b) => (a[1] - b[1]) || String(a[6]).localeCompare(String(b[6])));
       parts.forEach((p) => body.push(['참여자', '', '', p.name, '접속', '', p.joined_at]));

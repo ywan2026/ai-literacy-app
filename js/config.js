@@ -4,8 +4,8 @@
 window.APP_CONFIG = {
   // Supabase 대시보드 > Project Settings > API 에서 복사
   // 두 값이 비어 있으면 '데모 모드'(이 브라우저 안에서만 동작)로 실행됩니다.
-  SUPABASE_URL: '',
-  SUPABASE_ANON_KEY: '',
+  SUPABASE_URL: 'https://qwlftpqwtmpbzmuuncue.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_kUgY92bUKR7Y_kbBYi5Jlw_owp_4QFm',  // publishable 키도 여기에 넣으면 됩니다
 
   // 수업 방 이름 (schema.sql 맨 아래 값과 같게). 주소 뒤에 ?room=다른이름 으로 바꿀 수도 있습니다.
   ROOM_ID: 'sookmyung',
