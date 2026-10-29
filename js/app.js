@@ -198,6 +198,7 @@
     el.innerHTML = h;
     el.scrollTop = 0;
     el.querySelectorAll('.check').forEach((b) => b.addEventListener('click', () => b.classList.toggle('on')));
+    el.querySelectorAll('.ex-img img').forEach((img) => img.addEventListener('click', () => openLightbox(img.src, img.alt)));
 
     if (s.submit) {
       const host = el.querySelector('.submit-host') || el.appendChild(Object.assign(document.createElement('div'), { className: 'submit-host' }));

@@ -469,3 +469,10 @@ table.terms { width: 100%; border-collapse: collapse; font-size: 14px; min-width
 .ov-card.is-div { background: linear-gradient(160deg, #eaf3ff, #f0efff); }
 .ov-card.current { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
 .ov-card.current .ov-n { color: var(--blue); }
+
+/* 예시 이미지 2x2 크게 · 연결 문구 */
+.ex-grid { grid-template-columns: repeat(2, 1fr); }
+.ex-img { aspect-ratio: 16 / 9; }
+.ex-img img { cursor: zoom-in; }
+.bridge { margin: -4px 0 14px; padding: 12px 16px; border-radius: 12px; background: linear-gradient(90deg, rgba(88,86,214,.10), rgba(0,122,255,.06)); border-left: 4px solid var(--indigo); font-size: 15px; color: var(--label-2); }
+.bridge b { display: block; color: var(--label); margin-bottom: 2px; }

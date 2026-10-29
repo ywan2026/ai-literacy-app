@@ -88,7 +88,8 @@ window.SLIDES = [
   },
   {
     key: 'data-flow', section: 2, title: '내가 올린 사진은 어디로 갈까?',
-    html: `<div class="flow-anim" aria-label="사진이 업로드되어 서버에 저장되고 학습 데이터와 사람 검토로 이어지는 과정">
+    html: `<div class="bridge"><b>잠깐, 왜 AI는 이렇게 진짜 같은 이미지를 만들 수 있을까?</b> 사람들이 인터넷과 AI 서비스에 올린 엄청난 양의 사진을 학습했기 때문이에요. 그 속에는 <u>여러분이 올린 사진</u>도 있을 수 있어요. 그럼 내가 올린 사진은 실제로 어떤 길을 거칠까요?</div>
+      <div class="flow-anim" aria-label="사진이 업로드되어 서버에 저장되고 학습 데이터와 사람 검토로 이어지는 과정">
         <div class="fa-track"></div>
         <div class="fa-photo"><svg viewBox="0 0 40 32"><rect x="1" y="1" width="38" height="30" rx="5" fill="#fff" stroke="#007aff" stroke-width="2"/><circle cx="13" cy="11" r="4" fill="#ffb340"/><path d="M4 28l10-10 7 7 6-5 9 8z" fill="#34c759"/></svg></div>
         <div class="fa-st s1"><div class="fa-ico">📱</div><b>내 기기</b><span>사진 선택·업로드</span></div>
@@ -197,7 +198,7 @@ window.SLIDES = [
   },
   {
     key: 'video-ebs', section: 3, title: '가짜 영상, 진짜 피해',
-    video: { id: 'hpd7k8GHrlo', start: 0, end: 0, caption: 'EBS × 한국양성평등교육진흥원 「가짜 영상, 진짜 피해」 (2025.12, 9분 7초) · 일부 구간 시청' },
+    video: { id: 'hpd7k8GHrlo', start: 20, end: 140, caption: 'EBS × 한국양성평등교육진흥원 「가짜 영상, 진짜 피해」 (2025.12) · 0:20~2:20 구간 시청' },
     chatPrompt: '영상에서 가장 기억에 남는 장면이나 말은?',
   },
   {
@@ -231,6 +232,12 @@ window.SLIDES = [
     chatPrompt: 'AI가 만든 것은 누구의 것일까?',
   },
   {
+    key: 'video-colorado', section: 4, title: '미술대회 1위 작품, 알고 보니 AI가 그렸다?',
+    video: { id: '6alFjze_LVc', start: 0, end: 0, caption: 'KBS [글로벌K] 미 미술전서 AI가 그린 그림이 1위…논란 일파만파 (2022.9.7.)' },
+    html: `<p class="sub">2022년 미국 콜로라도 주 박람회 미술대회 디지털아트 부문에서 미드저니로 만든 「스페이스 오페라 극장」이 1위를 차지했어요. 작가는 프롬프트를 수백 번 고쳤다고 했지만, 미국 저작권청은 이 그림의 저작권 등록을 거절했어요.</p>`,
+    chatPrompt: '이 작품의 1위, 인정할 수 있다/없다? 이유는?',
+  },
+  {
     key: 'ai-copyright', section: 4, title: 'AI가 만든 그림, 저작권이 있을까?',
     html: `<div class="grid-2">
         <div class="info-card"><div class="tag">저작권법 제2조</div><h3>저작물 = 인간의 사상·감정을 표현한 창작물</h3>
@@ -243,12 +250,6 @@ window.SLIDES = [
         <div class="mini"><b>AI 만화 (미국)</b><span>사람이 쓴 글과 컷 배치는 인정, AI가 그린 그림은 불인정</span></div>
       </div>`,
     chatPrompt: 'AI 그림에도 저작권을 줘야 할까? 찬성/반대와 이유',
-  },
-  {
-    key: 'video-colorado', section: 4, title: '미술대회 1위 작품, 알고 보니 AI가 그렸다?',
-    video: { id: '6alFjze_LVc', start: 0, end: 0, caption: 'KBS [글로벌K] 미 미술전서 AI가 그린 그림이 1위…논란 일파만파 (2022.9.7.)' },
-    html: `<p class="sub">2022년 미국 콜로라도 주 박람회 미술대회 디지털아트 부문에서 미드저니로 만든 「스페이스 오페라 극장」이 1위를 차지했어요. 작가는 프롬프트를 수백 번 고쳤다고 했지만, 미국 저작권청은 이 그림의 저작권 등록을 거절했어요.</p>`,
-    chatPrompt: '이 작품의 1위, 인정할 수 있다/없다? 이유는?',
   },
   {
     key: 'debate', section: 4, title: '누구에게 저작권을 인정할 수 있을까?',
@@ -347,14 +348,17 @@ window.SLIDES = [
   },
   {
     key: 'bias-examples', section: 5, title: '실제로 만들어 보면? 편향이 드러난 예시',
-    html: `<p class="sub">성별·나이·인종을 말하지 않고 직업만 넣어 AI에게 요청한 결과예요.</p>
+    html: `<p class="sub">성별·나이·인종을 말하지 않고 <b>직업 이름만</b> 넣어 AI에게 사진을 요청한 결과예요. 누가 어떤 직업으로 그려졌는지 살펴봐요.</p>
       <div class="ex-grid">
-        <figure class="ex"><div class="ex-img"><img src="images/bias-1.jpg" alt="AI가 만든 판사 이미지" onerror="this.closest('.ex').classList.add('empty')"><span class="ex-ph">🎨<br>지금 함께 만들어 봐요</span></div><figcaption><b>"판사의 사진을 만들어 줘"</b>결과에 나온 사람은 누구인가요?</figcaption></figure>
-        <figure class="ex"><div class="ex-img"><img src="images/bias-2.jpg" alt="AI가 만든 간호사 이미지" onerror="this.closest('.ex').classList.add('empty')"><span class="ex-ph">🎨<br>지금 함께 만들어 봐요</span></div><figcaption><b>"간호사의 사진을 만들어 줘"</b>성별과 나이를 살펴봐요</figcaption></figure>
-        <figure class="ex"><div class="ex-img"><img src="images/bias-3.jpg" alt="AI가 만든 CEO 이미지" onerror="this.closest('.ex').classList.add('empty')"><span class="ex-ph">🎨<br>지금 함께 만들어 봐요</span></div><figcaption><b>"CEO의 사진을 만들어 줘"</b>옷차림과 피부색을 살펴봐요</figcaption></figure>
-        <figure class="ex"><div class="ex-img"><img src="images/bias-4.jpg" alt="AI가 만든 프로그래머 이미지" onerror="this.closest('.ex').classList.add('empty')"><span class="ex-ph">🎨<br>지금 함께 만들어 봐요</span></div><figcaption><b>"프로그래머의 사진을 만들어 줘"</b>나이와 성별을 살펴봐요</figcaption></figure>
+        <figure class="ex"><div class="ex-img"><img src="images/bias-1.jpg" alt="AI가 만든 의사 이미지: 진료실의 중년 남성" onerror="this.closest('.ex').classList.add('empty')"><span class="ex-ph">🎨<br>지금 함께 만들어 봐요</span></div><figcaption><b>① "의사의 사진을 만들어 줘"</b>성별은? 나이대는?</figcaption></figure>
+        <figure class="ex"><div class="ex-img"><img src="images/bias-2.jpg" alt="AI가 만든 간호사 이미지: 병동의 젊은 여성" onerror="this.closest('.ex').classList.add('empty')"><span class="ex-ph">🎨<br>지금 함께 만들어 봐요</span></div><figcaption><b>② "간호사의 사진을 만들어 줘"</b>의사와 무엇이 다른가요?</figcaption></figure>
+        <figure class="ex"><div class="ex-img"><img src="images/bias-3.jpg" alt="AI가 만든 계산원 이미지: 마트 계산대의 여성" onerror="this.closest('.ex').classList.add('empty')"><span class="ex-ph">🎨<br>지금 함께 만들어 봐요</span></div><figcaption><b>③ "계산원의 사진을 만들어 줘"</b>어떤 성별로 그렸나요?</figcaption></figure>
+        <figure class="ex"><div class="ex-img"><img src="images/bias-4.jpg" alt="AI가 만든 보안 전문가 이미지: 관제실의 남성" onerror="this.closest('.ex').classList.add('empty')"><span class="ex-ph">🎨<br>지금 함께 만들어 봐요</span></div><figcaption><b>④ "보안 전문가의 사진을 만들어 줘"</b>배경과 분위기는?</figcaption></figure>
       </div>
-      <div class="callout small"><b>함께 보기</b> 네 장 중 여성은 몇 명? 50대 이상은? 피부색은? 다음 장에서 직접 실험해 확인해요.</div>`,
+      <div class="grid-2" style="margin-top:12px">
+        <div class="callout small" style="margin-top:0"><b>함께 찾아봐요</b> 의사·보안 전문가는 남성, 간호사·계산원은 여성으로 그렸어요. 앞에서 본 연구 결과와 같은 패턴일까요? 모두 한국인처럼 보이는 건 왜일까요? (한국어로 요청했기 때문일 수 있어요)</div>
+        <div class="callout small" style="margin-top:0"><b>오른쪽 아래 ✦ 표시를 찾아봐요</b> Google Gemini로 만든 이미지에 붙는 표시예요. 10번에서 배운 'AI 표시 확인'을 실제로 해 볼 수 있어요.</div>
+      </div>`,
     chatPrompt: '예시 이미지에서 발견한 편향은?',
   },
   {
